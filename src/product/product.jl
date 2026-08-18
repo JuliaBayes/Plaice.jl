@@ -185,12 +185,9 @@ end
     push!(exprs, :(return (vcat($(vcat_args...)), +($(lj_args...)))))
     return Expr(:block, exprs...)
 end
-# See above for note about formatting
-#! format: off
 @generated function (t::ProductVecTransform{<:NamedTuple{names}})(
     x::NamedTuple{names}
 ) where {names}
-#! format: on
     expr = Expr(:tuple)
     for nm in names
         push!(expr.args, :(t.transforms.$nm(x.$nm)))
@@ -242,12 +239,9 @@ _cartesian_indices(x::AbstractArray) = CartesianIndices(x)
     return Expr(:block, exprs...)
 end
 
-# See above for note about formatting
-#! format: off
 @generated function (t::ProductVecInvTransform{<:NTuple{P,Any},<:NTuple{P,Any},<:NTuple{N,Int}})(
     y::AbstractVector{T}
 ) where {P,N,T}
-#! format: on
     # P = number of distributions in the product distribution
     # N = dimension of each distribution
     exprs = []
