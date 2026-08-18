@@ -54,8 +54,7 @@ end
 for struct_type in (:ProductVecTransform, :ProductVecInvTransform)
     @eval begin
         Base.:(==)(t1::$struct_type, t2::$struct_type) =
-            (t1.transforms == t2.transforms) &
-            (t1.ranges == t2.ranges) &
+            (t1.transforms == t2.transforms) & (t1.ranges == t2.ranges) &
             (t1.base_size == t2.base_size)
         Base.isequal(t1::$struct_type, t2::$struct_type) =
             isequal(t1.transforms, t2.transforms) &&
@@ -78,7 +77,8 @@ function _get_val_iterator(::ProductVecTransform{<:Any,<:Any,Tuple{}}, x::Abstra
     return x
 end
 function _get_val_iterator(
-    ::ProductVecTransform{<:Any,<:Any,NTuple{N,Int}}, x::AbstractArray{T,MplusN}
+    ::ProductVecTransform{<:Any,<:Any,NTuple{N,Int}},
+    x::AbstractArray{T,MplusN},
 ) where {T,MplusN,N}
     # Multivariate case. The distribution itself has dimension N, and has been expanded
     # by M extra dimensions (e.g. fill(MvNormal(...), 3, 3, 3) would have M=3 and N=2).
@@ -89,7 +89,8 @@ function _get_val_iterator(
 end
 
 @generated function with_logabsdet_jacobian(
-    t::ProductVecTransform{<:NTuple{P,Any},<:NTuple{P,Any},Dims{N}}, x::AbstractArray{T}
+    t::ProductVecTransform{<:NTuple{P,Any},<:NTuple{P,Any},Dims{N}},
+    x::AbstractArray{T},
 ) where {P,N,T}
     # P = number of distributions in the product distribution
     # N = dimension of each distribution
@@ -111,9 +112,8 @@ end
             push!(
                 exprs,
                 :(
-                    ($y_sym, $lj_sym) = with_logabsdet_jacobian(
-                        t.transforms[$i], view(x, $colons..., $i)
-                    )
+                    ($y_sym, $lj_sym) =
+                        with_logabsdet_jacobian(t.transforms[$i], view(x, $colons..., $i))
                 ),
             )
         end
@@ -152,7 +152,8 @@ end
 end
 
 function with_logabsdet_jacobian(
-    t::ProductVecTransform{<:AbstractArray}, x::AbstractArray{T}
+    t::ProductVecTransform{<:AbstractArray},
+    x::AbstractArray{T},
 ) where {T}
     @assert size(x) == (t.base_size..., size(t.transforms)...)
     total_length = sum(length, t.ranges)
@@ -180,7 +181,8 @@ function (t::ProductVecTransform{<:AbstractArray})(x::AbstractArray{T}) where {T
 end
 
 @generated function with_logabsdet_jacobian(
-    t::ProductVecTransform{<:NamedTuple{names}}, x::NamedTuple{names}
+    t::ProductVecTransform{<:NamedTuple{names}},
+    x::NamedTuple{names},
 ) where {names}
     vcat_args = [Symbol("y_$nm") for nm in names]
     lj_args = [Symbol("lj_$nm") for nm in names]
@@ -205,7 +207,9 @@ end
 end
 
 @generated function _set_lastindex!(
-    x::AbstractArray{T,N}, i::CartesianIndex{M}, val
+    x::AbstractArray{T,N},
+    i::CartesianIndex{M},
+    val,
 ) where {T,M,N}
     colons = fill(:, N - M)
     return quote
@@ -235,9 +239,8 @@ _cartesian_indices(x::AbstractArray) = CartesianIndices(x)
         push!(
             exprs,
             :(
-                ($x_sym, $lj_sym) = with_logabsdet_jacobian(
-                    t.transforms[$i], view(y, t.ranges[$i])
-                )
+                ($x_sym, $lj_sym) =
+                    with_logabsdet_jacobian(t.transforms[$i], view(y, t.ranges[$i]))
             ),
         )
         push!(exprs, :(x[$colons..., $i] = $x_sym))
@@ -268,7 +271,8 @@ end
 end
 
 function with_logabsdet_jacobian(
-    t::ProductVecInvTransform{<:AbstractArray}, y::AbstractVector{T}
+    t::ProductVecInvTransform{<:AbstractArray},
+    y::AbstractVector{T},
 ) where {T}
     @assert length(y) == sum(length, t.ranges)
     x = Array{T}(undef, t.base_size..., size(t.transforms)...)
@@ -293,7 +297,8 @@ function (t::ProductVecInvTransform{<:AbstractArray})(y::AbstractVector{T}) wher
 end
 
 @generated function with_logabsdet_jacobian(
-    t::ProductVecInvTransform{<:NamedTuple{names}}, y::AbstractVector{T}
+    t::ProductVecInvTransform{<:NamedTuple{names}},
+    y::AbstractVector{T},
 ) where {names,T}
     expr = Expr(:block)
     push!(expr.args, :(x = (;)))
@@ -310,7 +315,7 @@ end
     return expr
 end
 @generated function (t::ProductVecInvTransform{<:NamedTuple{names}})(
-    y::AbstractVector{T}
+    y::AbstractVector{T},
 ) where {names,T}
     expr = Expr(:tuple)
     for nm in names
@@ -320,7 +325,10 @@ end
 end
 
 @generated function _make_transform(
-    dists::NamedTuple{names}, indiv_transform_fn, length_fn, struct_type
+    dists::NamedTuple{names},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
 ) where {names}
     exprs = []
     trfms = Expr(:tuple)
@@ -332,7 +340,7 @@ end
     push!(exprs, :(offset = 1))
     for nm in names
         push!(exprs, :(this_length = length_fn(dists.$nm)))
-        push!(exprs, :(ranges = (ranges..., $nm=offset:(offset + this_length - 1))))
+        push!(exprs, :(ranges = (ranges..., $nm=offset:(offset+this_length-1))))
         push!(exprs, :(offset += this_length))
     end
     push!(exprs, :(return struct_type(trfms, ranges, size(dists[1]))))
@@ -340,7 +348,10 @@ end
 end
 
 @generated function _make_transform_inner(
-    dists::NTuple{NDists,D.Distribution}, indiv_transform_fn, length_fn, struct_type
+    dists::NTuple{NDists,D.Distribution},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
 ) where {NDists}
     exprs = []
     trfms = Expr(:tuple)
@@ -352,7 +363,7 @@ end
     push!(exprs, :(offset = 1))
     for i in 1:NDists
         push!(exprs, :(this_length = length_fn(dists[$i])))
-        push!(exprs, :(ranges = (ranges..., offset:(offset + this_length - 1))))
+        push!(exprs, :(ranges = (ranges..., offset:(offset+this_length-1))))
         push!(exprs, :(offset += this_length))
     end
     push!(exprs, :(return struct_type(trfms, ranges, size(dists[1]))))
@@ -360,7 +371,10 @@ end
 end
 
 function _make_transform_inner(
-    dists::AbstractArray{<:D.Distribution}, indiv_transform_fn, length_fn, struct_type
+    dists::AbstractArray{<:D.Distribution},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
 )
     # map(indiv_transform_fn, dists) causes some Enzyme errors when used with DPPL
     # https://github.com/TuringLang/DynamicPPL.jl/issues/1304
@@ -369,7 +383,7 @@ function _make_transform_inner(
     offset = 1
     for (i, dist) in enumerate(dists)
         this_length = length_fn(dist)
-        ranges[i] = offset:(offset + this_length - 1)
+        ranges[i] = offset:(offset+this_length-1)
         offset += this_length
     end
     return struct_type(trfms, ranges, size(dists[1]))
@@ -379,7 +393,10 @@ _sz(t::Tuple) = (length(t),)
 _sz(t::AbstractArray) = size(t)
 
 function _make_transform(
-    dists::Union{Tuple,AbstractArray}, indiv_transform_fn, length_fn, struct_type
+    dists::Union{Tuple,AbstractArray},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
 )
     return if has_constant_vec_bijector(typeof(dists))
         # Performance optimisation when all distributions have the same bijector type. (Note
@@ -404,12 +421,18 @@ for (product_type, dist_field) in (
     @eval begin
         function from_vec(d::$product_type)
             return _make_transform(
-                d.$dist_field, from_vec, vec_length, ProductVecInvTransform
+                d.$dist_field,
+                from_vec,
+                vec_length,
+                ProductVecInvTransform,
             )
         end
         function from_linked_vec(d::$product_type)
             return _make_transform(
-                d.$dist_field, from_linked_vec, linked_vec_length, ProductVecInvTransform
+                d.$dist_field,
+                from_linked_vec,
+                linked_vec_length,
+                ProductVecInvTransform,
             )
         end
         function to_vec(d::$product_type)
@@ -417,7 +440,10 @@ for (product_type, dist_field) in (
         end
         function to_linked_vec(d::$product_type)
             return _make_transform(
-                d.$dist_field, to_linked_vec, linked_vec_length, ProductVecTransform
+                d.$dist_field,
+                to_linked_vec,
+                linked_vec_length,
+                ProductVecTransform,
             )
         end
 

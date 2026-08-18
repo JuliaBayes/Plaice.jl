@@ -50,7 +50,8 @@ struct InverseJointOrderWrap{B<:ScalarToScalarBijector}
 end
 (w::InverseJointOrderWrap)(y::AbstractVector) = first(with_logabsdet_jacobian(w, y))
 function with_logabsdet_jacobian(
-    m::InverseJointOrderWrap, y::AbstractVector{T}
+    m::InverseJointOrderWrap,
+    y::AbstractVector{T},
 ) where {T<:Real}
     # First, we need to undo the logarithmic transformations to get back to the ordered
     # vector.
@@ -59,7 +60,7 @@ function with_logabsdet_jacobian(
     if length(y) > 1
         for i in eachindex(y)[2:end]
             temp = x[i]
-            x[i] = exp(temp) + x[i - 1]
+            x[i] = exp(temp) + x[i-1]
             logjac += temp
         end
     end

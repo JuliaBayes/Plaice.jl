@@ -96,7 +96,7 @@ has_constant_vec_bijector(::Type{<:IDENTITY_UNIVARIATES}) = true
 has_constant_vec_bijector(::Type{<:POSITIVE_UNIVARIATES}) = true
 # between 0 and 1
 function has_constant_vec_bijector(
-    ::Type{<:Union{D.Beta,D.KSOneSided,D.NoncentralBeta,D.LogitNormal}}
+    ::Type{<:Union{D.Beta,D.KSOneSided,D.NoncentralBeta,D.LogitNormal}},
 )
     return true
 end
@@ -109,7 +109,7 @@ has_constant_vec_bijector(::Type{<:SIMPLEX_MULTIVARIATES}) = true
 has_constant_vec_bijector(::Type{<:D.DiscreteMultivariateDistribution}) = true
 
 function (t::ProductVecTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}})(
-    x::AbstractArray{T}
+    x::AbstractArray{T},
 ) where {F,M,N,T}
     trf = t.transforms.value
     return if N == 0
@@ -120,7 +120,7 @@ function (t::ProductVecTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}})(
     end
 end
 function (::ProductVecTransform{<:Elementwise{TypedIdentity},Nothing,Dims{0}})(
-    x::AbstractArray
+    x::AbstractArray,
 )
     # If the wrapped transform is TypedIdentity, and the distribution is univariate (i.e.,
     # the 'base size' is `()::Dims{0}`), then the entire vectorisation transform amounts to
@@ -144,7 +144,8 @@ function (w::WithLogabsdetjac)(x::AbstractArray)
 end
 
 function with_logabsdet_jacobian(
-    t::ProductVecTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}}, x::AbstractArray{T}
+    t::ProductVecTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}},
+    x::AbstractArray{T},
 ) where {F,M,N,T}
     trf = t.transforms.value
     return if N == 0
@@ -164,13 +165,14 @@ function with_logabsdet_jacobian(
     end
 end
 function with_logabsdet_jacobian(
-    ::ProductVecTransform{<:Elementwise{TypedIdentity},Nothing,Dims{0}}, x::AbstractArray{T}
+    ::ProductVecTransform{<:Elementwise{TypedIdentity},Nothing,Dims{0}},
+    x::AbstractArray{T},
 ) where {T}
     return vec(x), _fzero(T)
 end
 
 function (t::ProductVecInvTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}})(
-    y::AbstractVector{T}
+    y::AbstractVector{T},
 ) where {F,M,N,T}
     return if N == 0
         # univariate -- we just need to apply the transform to everything, and
@@ -184,7 +186,7 @@ function (t::ProductVecInvTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}})(
     end
 end
 function (t::ProductVecInvTransform{<:Elementwise{TypedIdentity},Nothing,Dims{0}})(
-    y::AbstractVector
+    y::AbstractVector,
 )
     return reshape(y, t.transforms.size)
 end

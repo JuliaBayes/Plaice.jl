@@ -55,10 +55,12 @@ end
 # HACK: Allows us to define custom chain rules while we wait for upstream fixes.
 transpose_eager(X::AbstractMatrix) = permutedims(X)
 
-cholesky_upper(X::AbstractMatrix) = upper_triangular(parent(LinearAlgebra.cholesky(LinearAlgebra.Hermitian(X)).U))
+cholesky_upper(X::AbstractMatrix) =
+    upper_triangular(parent(LinearAlgebra.cholesky(LinearAlgebra.Hermitian(X)).U))
 cholesky_upper(X::LinearAlgebra.Cholesky) = X.U
 
-cholesky_lower(X::AbstractMatrix) = lower_triangular(parent(LinearAlgebra.cholesky(LinearAlgebra.Hermitian(X, :L)).L))
+cholesky_lower(X::AbstractMatrix) =
+    lower_triangular(parent(LinearAlgebra.cholesky(LinearAlgebra.Hermitian(X, :L)).L))
 cholesky_lower(X::LinearAlgebra.Cholesky) = X.L
 
 #      n * (n - 1) / 2 = d
@@ -111,8 +113,8 @@ function _simplex_bijector!(y, x::AbstractVector, ::SimplexBijector)
     sum_tmp = zero(T)
     @inbounds z = x[1] * (one(T) - 2ϵ) + ϵ # z ∈ [ϵ, 1-ϵ]
     @inbounds y[1] = LogExpFunctions.logit(z) + log(T(K - 1))
-    @inbounds @simd for k in 2:(K - 1)
-        sum_tmp += x[k - 1]
+    @inbounds @simd for k in 2:(K-1)
+        sum_tmp += x[k-1]
         # z ∈ [ϵ, 1-ϵ]
         # x[k] = 0 && sum_tmp = 1 -> z ≈ 1
         z = (x[k] + ϵ) * (one(T) - 2ϵ) / ((one(T) + ϵ) - sum_tmp)
@@ -131,8 +133,8 @@ function _simplex_bijector!(Y, X::AbstractMatrix, ::SimplexBijector)
         sum_tmp = zero(T)
         z = X[1, n] * (one(T) - 2ϵ) + ϵ
         Y[1, n] = LogExpFunctions.logit(z) + log(T(K - 1))
-        for k in 2:(K - 1)
-            sum_tmp += X[k - 1, n]
+        for k in 2:(K-1)
+            sum_tmp += X[k-1, n]
             z = (X[k, n] + ϵ) * (one(T) - 2ϵ) / ((one(T) + ϵ) - sum_tmp)
             Y[k, n] = LogExpFunctions.logit(z) + log(T(K - k))
         end
@@ -158,12 +160,12 @@ function _simplex_inv_bijector!(x, y::AbstractVector, b::SimplexBijector)
     @inbounds z = LogExpFunctions.logistic(y[1] - log(T(K - 1)))
     @inbounds x[1] = _clamp((z - ϵ) / (one(T) - 2ϵ), 0, 1)
     sum_tmp = zero(T)
-    @inbounds @simd for k in 2:(K - 1)
+    @inbounds @simd for k in 2:(K-1)
         z = LogExpFunctions.logistic(y[k] - log(T(K - k)))
-        sum_tmp += x[k - 1]
+        sum_tmp += x[k-1]
         x[k] = _clamp(((one(T) + ϵ) - sum_tmp) / (one(T) - 2ϵ) * z - ϵ, 0, 1)
     end
-    @inbounds sum_tmp += x[K - 1]
+    @inbounds sum_tmp += x[K-1]
     x[K] = _clamp(one(T) - sum_tmp, 0, 1)
     return x
 end
@@ -176,12 +178,12 @@ function _simplex_inv_bijector!(X, Y::AbstractMatrix, b::SimplexBijector)
     @inbounds @simd for n in 1:size(X, 2)
         sum_tmp, z = zero(T), LogExpFunctions.logistic(Y[1, n] - log(T(K - 1)))
         X[1, n] = _clamp((z - ϵ) / (one(T) - 2ϵ), 0, 1)
-        for k in 2:(K - 1)
+        for k in 2:(K-1)
             z = LogExpFunctions.logistic(Y[k, n] - log(T(K - k)))
-            sum_tmp += X[k - 1, n]
+            sum_tmp += X[k-1, n]
             X[k, n] = _clamp(((one(T) + ϵ) - sum_tmp) / (one(T) - 2ϵ) * z - ϵ, 0, 1)
         end
-        sum_tmp += X[K - 1, n]
+        sum_tmp += X[K-1, n]
         X[K, n] = _clamp(one(T) - sum_tmp, 0, 1)
     end
 
@@ -197,8 +199,8 @@ function _logabsdetjac_simplex(b::SimplexBijector, x::AbstractVector{T}) where {
     sum_tmp = zero(eltype(x))
     @inbounds z = x[1]
     lp += log(max(z, ϵ)) + log(max(one(T) - z, ϵ))
-    @inbounds @simd for k in 2:(K - 1)
-        sum_tmp += x[k - 1]
+    @inbounds @simd for k in 2:(K-1)
+        sum_tmp += x[k-1]
         z = x[k] / max(one(T) - sum_tmp, ϵ)
         lp += log(max(z, ϵ)) + log(max(one(T) - z, ϵ)) + log(max(one(T) - sum_tmp, ϵ))
     end
@@ -253,7 +255,7 @@ function _link_chol_lkj(W::AbstractMatrix)
 
     @inbounds for j in 1:K
         remainder_sq = W[j, j]^2
-        for i in (j - 1):-1:1
+        for i in (j-1):-1:1
             z = W[i, j] / sqrt(remainder_sq)
             y[i, j] = asinh(z)
             remainder_sq += W[i, j]^2
@@ -277,13 +279,13 @@ function _link_chol_lkj_from_upper(W::AbstractMatrix)
         y[starting_idx] = atanh(W[1, j])
         starting_idx += 1
         remainder_sq = W[j, j]^2
-        for i in (j - 1):-1:2
+        for i in (j-1):-1:2
             idx = starting_idx + i - 2
             z = W[i, j] / sqrt(remainder_sq)
             y[idx] = asinh(z)
             remainder_sq += W[i, j]^2
         end
-        starting_idx += length((j - 1):-1:2)
+        starting_idx += length((j-1):-1:2)
     end
 
     return y
@@ -306,7 +308,7 @@ function _inv_link_chol_lkj(Y::AbstractMatrix)
 
     @inbounds for j in 1:K
         log_remainder = zero(T)  # log of proportion of unit vector remaining
-        for i in 1:(j - 1)
+        for i in 1:(j-1)
             z = tanh(Y[i, j])
             W[i, j] = z * exp(log_remainder)
             log_remainder -= LogExpFunctions.logcosh(Y[i, j])
@@ -314,7 +316,7 @@ function _inv_link_chol_lkj(Y::AbstractMatrix)
         end
         logJ += log_remainder
         W[j, j] = exp(log_remainder)
-        for i in (j + 1):K
+        for i in (j+1):K
             W[i, j] = 0
         end
     end
@@ -336,7 +338,7 @@ function _inv_link_chol_lkj(y::AbstractVector)
     idx = 1
     @inbounds for j in 1:K
         log_remainder = zero(T)  # log of proportion of unit vector remaining
-        for i in 1:(j - 1)
+        for i in 1:(j-1)
             z = z_vec[idx]
             W[i, j] = z * exp(log_remainder)
             log_remainder -= lc_vec[idx]
@@ -345,7 +347,7 @@ function _inv_link_chol_lkj(y::AbstractVector)
         end
         logJ += log_remainder
         W[j, j] = exp(log_remainder)
-        for i in (j + 1):K
+        for i in (j+1):K
             W[i, j] = 0
         end
     end
@@ -357,7 +359,7 @@ function _logabsdetjac_inv_corr(Y::AbstractMatrix)
     K = LinearAlgebra.checksquare(Y)
 
     result = float(zero(eltype(Y)))
-    @inbounds for j in 2:K, i in 1:(j - 1)
+    @inbounds for j in 2:K, i in 1:(j-1)
         result -= (K - i + 1) * LogExpFunctions.logcosh(Y[i, j])
     end
     return result
@@ -381,7 +383,7 @@ function _logabsdetjac_inv_chol(y::AbstractVector)
     idx = 1
     @inbounds for j in 2:K
         tmp = zero(result)
-        for _ in 1:(j - 1)
+        for _ in 1:(j-1)
             logcoshy = LogExpFunctions.logcosh(y[idx])
             tmp -= logcoshy
             result += tmp - logcoshy
@@ -419,7 +421,7 @@ function with_logabsdet_jacobian(::Inverse{VecCorrBijector}, y)
     # workaround for tuples that don't support iteration in certain AD backends
     U, logJ = U_logJ[1], U_logJ[2]
     K = size(U, 1)
-    for j in 2:(K - 1)
+    for j in 2:(K-1)
         logJ += (K - j) * log(U[j, j])
     end
     return pd_from_upper(U), logJ
@@ -449,7 +451,7 @@ struct VecCholeskyBijector
         else
             throw(
                 ArgumentError(
-                    "mode must be either :U (upper triangular) or :L (lower triangular)"
+                    "mode must be either :U (upper triangular) or :L (lower triangular)",
                 ),
             )
         end
@@ -488,14 +490,18 @@ end
 
 # ---- TransformedDistribution (minimal, for dispatch only) ----
 
-struct TransformedDistribution{Dist,Bijec,V} <: Distributions.Distribution{V,Distributions.Continuous}
+struct TransformedDistribution{Dist,Bijec,V} <:
+       Distributions.Distribution{V,Distributions.Continuous}
     dist::Dist
     transform::Bijec
 end
 
-const UnivariateTransformed = TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Univariate}
-const MultivariateTransformed = TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Multivariate}
-const MatrixTransformed = TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Matrixvariate}
+const UnivariateTransformed =
+    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Univariate}
+const MultivariateTransformed =
+    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Multivariate}
+const MatrixTransformed =
+    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Matrixvariate}
 
 # ---- OrderedDistribution (minimal, for dispatch only) ----
 

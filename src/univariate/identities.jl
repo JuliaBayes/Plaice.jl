@@ -22,7 +22,7 @@ VectorBijectors.scalar_to_scalar_bijector(::IDENTITY_UNIVARIATES) = TypedIdentit
 
 # Furthermore, scaling and shifting doesn't affect the support of these distributions
 function VectorBijectors.scalar_to_scalar_bijector(
-    ::D.AffineDistribution{<:Any,<:Any,<:IDENTITY_UNIVARIATES}
+    ::D.AffineDistribution{<:Any,<:Any,<:IDENTITY_UNIVARIATES},
 )
     return TypedIdentity()
 end

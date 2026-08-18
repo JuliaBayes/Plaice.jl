@@ -78,30 +78,36 @@ end
 # distributions.
 to_vec_for_logjac_test(d::D.Distribution) = to_vec(d)
 from_vec_for_logjac_test(d::D.Distribution) = from_vec(d)
-to_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = x -> x[1:(end - 1)]
+to_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = x -> x[1:(end-1)]
 from_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = y -> vcat(y, 1 - sum(y))
 function to_vec_for_logjac_test(
-    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution}
+    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution},
 )
     # Internal function, but we use this to avoid a LOT of code duplication
     return VectorBijectors._make_transform(
-        d.dists, to_vec_for_logjac_test, linked_vec_length, ProductVecTransform
+        d.dists,
+        to_vec_for_logjac_test,
+        linked_vec_length,
+        ProductVecTransform,
     )
 end
 function from_vec_for_logjac_test(
-    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution}
+    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution},
 )
     return VectorBijectors._make_transform(
-        d.dists, from_vec_for_logjac_test, linked_vec_length, ProductVecInvTransform
+        d.dists,
+        from_vec_for_logjac_test,
+        linked_vec_length,
+        ProductVecInvTransform,
     )
 end
 function to_vec_for_logjac_test(
-    ::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}}
+    ::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}},
 )
-    return x -> vec(x)[1:(end - 1)]
+    return x -> vec(x)[1:(end-1)]
 end
 function from_vec_for_logjac_test(
-    d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}}
+    d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}},
 )
     return y -> reshape(vcat(y, 1 - sum(y)), size(d))
 end
@@ -209,7 +215,7 @@ function to_vec_for_logjac_test(d::D.LKJ)
         vec_len = div(n * (n - 1), 2)
         xvec = zeros(eltype(x), vec_len)
         idx = 1
-        for i in 1:n, j in 1:(i - 1)
+        for i in 1:n, j in 1:(i-1)
             xvec[idx] = x[i, j]
             idx += 1
         end
@@ -221,7 +227,7 @@ function from_vec_for_logjac_test(d::D.LKJ)
     return xvec -> begin
         x = ones(eltype(xvec), n, n)
         idx = 1
-        for i in 1:n, j in 1:(i - 1)
+        for i in 1:n, j in 1:(i-1)
             x[i, j] = xvec[idx]
             x[j, i] = xvec[idx]
             idx += 1
@@ -279,7 +285,7 @@ function test_roundtrip(d::D.Distribution)
                 xnew = frvs(ffwd(x))
                 # https://github.com/TuringLang/Bijectors.jl/issues/441
                 if d isa D.JointOrderStatistics &&
-                    (any(isnan, xnew) || !all(isfinite, xnew))
+                   (any(isnan, xnew) || !all(isfinite, xnew))
                     @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
                 else
                     @test _isapprox_safe(x, xnew)

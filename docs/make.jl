@@ -1,18 +1,15 @@
 using Pkg: Pkg
-Pkg.develop(; path = dirname(@__DIR__))
+Pkg.develop(; path=dirname(@__DIR__))
 
-using Documenter, DocumenterCodeBlocks, VectorBijectors
+using Documenter, DocumenterCodeBlocks, VectorBijectors, Distributions
 
 makedocs(;
-    sitename = "VectorBijectors",
-    format = Documenter.HTML(),
-    modules = [VectorBijectors],
-    pages = ["index.md"],
-    checkdocs = :export,
-    plugins = [CodeBlocks()],
+    sitename="VectorBijectors",
+    format=Documenter.HTML(),
+    modules=[VectorBijectors],
+    pages=["index.md", "example.md"],
+    checkdocs=:export,
+    plugins=[CodeBlocks()],
 )
 
-deploydocs(;
-    repo = "github.com/JuliaBayes/VectorBijectors.jl.git",
-    push_preview = true,
-)
+deploydocs(; repo="github.com/JuliaBayes/VectorBijectors.jl.git", push_preview=true)

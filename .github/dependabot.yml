@@ -1,0 +1,24 @@
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "julia"
+    directories: # Location of Julia projects
+      - "/"
+      - "/docs"
+      - "/test"
+    schedule:
+      interval: "daily"
+    groups:
+      # Group all Julia package updates into a single PR:
+      all-julia-packages:
+        patterns:
+          - "*"
+    ignore:
+      # requires DynamicPPL@0.42 which fails with PigeonsExt
+      # anyway Turing shouldn't be a dep in either docs or tests, it should be nuked
+      - dependency-name: "Turing"
+        versions: [ ">=0.46" ]

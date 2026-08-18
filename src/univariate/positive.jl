@@ -72,7 +72,7 @@ const POSITIVE_UNIVARIATES = Union{
 VectorBijectors.scalar_to_scalar_bijector(d::POSITIVE_UNIVARIATES) = Log(minimum(d), 1)
 
 function VectorBijectors.scalar_to_scalar_bijector(
-    d::D.AffineDistribution{<:Any,<:Any,<:POSITIVE_UNIVARIATES}
+    d::D.AffineDistribution{<:Any,<:Any,<:POSITIVE_UNIVARIATES},
 )
     s = sign(D.scale(d))
     return Log(s > 0 ? minimum(d) : maximum(d), s)

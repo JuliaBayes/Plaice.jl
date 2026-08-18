@@ -7,8 +7,9 @@ It assumes that there are three forms of samples from a distribution `d` that we
  1. **The original form**, which is what `rand(d)` returns.
 
  2. **A vectorised form**, which is a vector that contains a flattened version of the original form.
+
  3. **A linked vectorised form**, which is a vector in which:
-    
+
       + each element is independent; and
       + each element is unconstrained (can take any value in ℝ).
 
@@ -66,8 +67,7 @@ VectorBijectors.linked_optic_vec
 In practice, if your distribution is a univariate distribution, you will probably only need to implement `scalar_to_scalar_bijector` (see below).
 
 For multivariate and matrix distributions, there are default implementations of the non-linked versions (i.e., `from_vec`, `to_vec`, `vec_length`, and `optic_vec`) which should already be optimal.
-However you will have to define the linked versions.
-The process of implementing `from_linked_vec` and `to_linked_vec` for a distribution is _very_ similar to the process of implementing `Bijectors.bijector`, so you can consult [the Bijectors.jl documentation for a guide on this](https://turinglang.org/Bijectors.jl/v0.15/defining_examples/).
+However you will have to define the linked versions (see [the examples page](@ref example) for more info).
 
 If you have a very customised distribution, you will likely have to implement all the functions yourself.
 
@@ -103,7 +103,7 @@ Because the scope of a vector bijector is very well-defined, there is a well-est
 This function contains additional keyword arguments to control the exact testing procedure.
 For example, you can test that the transformations do not cause extra allocations, should you know this to be the case for your bijector (note that this is not always possible).
 
-For more information about generally testing bijectors (and in particular how to test Jacobians for transformations that modify the number of dimensions), see [the documentation on examples of defining bijectors](@ref bijectors-defining-examples).
+For more information about generally testing bijectors (and in particular how to test Jacobians for transformations that modify the number of dimensions), see [the examples page](@ref example).
 
 One of the most tricky parts of testing VectorBijectors is ensuring that the transforms are compatible with automatic differentiation.
 This is important for DynamicPPL: we need to be able to compute the gradient of the log-density with respect to (possibly transformed) parameters, which may include the log-abs-det-Jacobian of the transformation.

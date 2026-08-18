@@ -112,7 +112,10 @@ enzyme_failures = [
 
     for d in heterogeneous_products
         VectorBijectors.test_all(
-            d; adtypes=adtypes, expected_zero_allocs=(), test_construction_type_stable=false
+            d;
+            adtypes=adtypes,
+            expected_zero_allocs=(),
+            test_construction_type_stable=false,
         )
     end
 
