@@ -1,0 +1,4 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
+VectorBijectors = "55802ec2-189d-45e6-a786-b4d97e4775f1"
