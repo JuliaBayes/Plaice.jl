@@ -29,12 +29,8 @@ function with_logabsdet_jacobian(w::VectWrap, x::Number)
 end
 inverse(w::VectWrap) = OnlyWrap(inverse(w.bijector))
 
-# For all univariate distributions, from_vec and to_vec are simple
-VectorBijectors.from_vec(::D.UnivariateDistribution) = OnlyWrap(TypedIdentity())
-VectorBijectors.to_vec(::D.UnivariateDistribution) = VectWrap(TypedIdentity())
-
 """
-    VectorBijectors.scalar_to_scalar_bijector(d::D.UnivariateDistribution)
+    VectorBijectors.scalar_to_scalar_bijector(dist)
 
 The VectorBijectors interface is intended to map samples to vectors. However, for univariate
 distributions, the 'vectorisation' part of this is trivial (we only need to convert a scalar
@@ -55,17 +51,3 @@ univariate distribution:
 If you need a different scalar-to-scalar bijector, please open an issue.
 """
 function scalar_to_scalar_bijector end
-function VectorBijectors.from_linked_vec(d::D.UnivariateDistribution)
-    return OnlyWrap(inverse(scalar_to_scalar_bijector(d)))
-end
-function VectorBijectors.to_linked_vec(d::D.UnivariateDistribution)
-    return VectWrap(scalar_to_scalar_bijector(d))
-end
-
-# vect_length and linked_vec_length are trivial
-VectorBijectors.vec_length(::D.UnivariateDistribution) = 1
-VectorBijectors.linked_vec_length(::D.UnivariateDistribution) = 1
-
-# Optics are trivially obtainable.
-VectorBijectors.optic_vec(::D.UnivariateDistribution) = [VarNames.Iden()]
-VectorBijectors.linked_optic_vec(::D.UnivariateDistribution) = [VarNames.Iden()]

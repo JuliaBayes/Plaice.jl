@@ -1,8 +1,6 @@
 module VectorBijectors
 
 using VarNames: VarNames, @opticof
-using Distributions: Distributions
-const D = Distributions
 import ChangesOfVariables: with_logabsdet_jacobian
 import InverseFunctions: inverse
 
@@ -27,14 +25,10 @@ export inverse
 include("common.jl")
 
 include("univariate/univariate.jl")
-include("univariate/identities.jl")
 include("univariate/positive.jl")
 include("univariate/truncated.jl")
 
-include("multivariate/multivariate.jl")
-include("multivariate/identities.jl")
 include("multivariate/mvlognormal.jl")
-include("multivariate/simplex.jl")
 
 include("matrix/matrix.jl")
 include("matrix/normal.jl")
@@ -47,8 +41,6 @@ include("cholesky/cholesky.jl")
 
 include("product/product.jl")
 include("product/fill.jl")
-
-include("transformed.jl")
 
 # Put last to avoid cluttering namespace
 include("test_utils.jl")

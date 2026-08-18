@@ -13,8 +13,3 @@ function with_logabsdet_jacobian(::MapExp, x::AbstractArray{T}) where {T<:Number
     return (y, sum(x))
 end
 inverse(::MapExp) = MapLog()
-
-from_linked_vec(::D.AbstractMvLogNormal) = MapExp()
-to_linked_vec(::D.AbstractMvLogNormal) = MapLog()
-linked_vec_length(d::D.AbstractMvLogNormal) = length(d)
-linked_optic_vec(d::D.AbstractMvLogNormal) = optic_vec(d)

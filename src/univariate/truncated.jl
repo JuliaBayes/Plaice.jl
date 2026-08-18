@@ -1,10 +1,10 @@
-# This file provides bijectors for continuous univariate distributions which have support
-# over arbitrary ranges `(a, b)`. In general, this file has to handle possibly infinite
-# values. The reason for this is because of type stability: we can't, for example, return to
-# a different bijector type in case we find that the bounds are infinite (which can only be
-# determined at runtime). So there is some element of code repetition here: the case where
-# both bounds are infinite is the same as `TypedIdentity`, and the case where only the upper
-# bound is infinite is the same as `Exp` and `Log`.
+# Bijectors for continuous univariate distributions which have support over arbitrary ranges
+# `(a, b)`. In general, this file has to handle possibly infinite values. The reason for
+# this is because of type stability: we can't, for example, return to a different bijector
+# type in case we find that the bounds are infinite (which can only be determined at
+# runtime). So there is some element of code repetition here: the case where both bounds are
+# infinite is the same as `TypedIdentity`, and the case where only the upper bound is
+# infinite is the same as `Exp` and `Log`.
 
 using LogExpFunctions: logit, logistic, log1pexp
 
@@ -101,8 +101,3 @@ function with_logabsdet_jacobian(u::Untruncate, x::Real)
     end
 end
 inverse(u::Untruncate) = Truncate(u.lower, u.upper)
-
-# This is the fallback option for all other univariate continuous distributions.
-function VectorBijectors.scalar_to_scalar_bijector(d::D.ContinuousUnivariateDistribution)
-    return Untruncate(minimum(d), maximum(d))
-end

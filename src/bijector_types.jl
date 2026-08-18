@@ -487,29 +487,3 @@ function with_logabsdet_jacobian(b::Inverse{VecCholeskyBijector}, y)
         return LinearAlgebra.Cholesky(transpose_eager(factors), 'L', 0), logJ
     end
 end
-
-# ---- TransformedDistribution (minimal, for dispatch only) ----
-
-struct TransformedDistribution{Dist,Bijec,V} <:
-       Distributions.Distribution{V,Distributions.Continuous}
-    dist::Dist
-    transform::Bijec
-end
-
-const UnivariateTransformed =
-    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Univariate}
-const MultivariateTransformed =
-    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Multivariate}
-const MatrixTransformed =
-    TransformedDistribution{<:Distributions.Distribution,<:Any,Distributions.Matrixvariate}
-
-# ---- OrderedDistribution (minimal, for dispatch only) ----
-
-struct OrderedDistribution{DT<:Distributions.ContinuousMultivariateDistribution,B} <:
-       Distributions.ContinuousMultivariateDistribution
-    "distribution transformed to have ordered support"
-    dist::DT
-    "transformation from constrained space to ordered unconstrained space"
-    transform::B
-end
-Base.length(d::OrderedDistribution) = length(d.dist)

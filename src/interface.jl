@@ -1,5 +1,5 @@
 """
-    VectorBijectors.from_vec(d::Distribution)
+    VectorBijectors.from_vec(dist)
 
 Returns a function that can be used to convert a vectorised sample from `d` back to its
 original form.
@@ -21,7 +21,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); from_vec(d)([0.
 function from_vec end
 
 """
-    VectorBijectors.to_vec(d::Distribution)
+    VectorBijectors.to_vec(dist)
 
 Returns a function that can be used to vectorise a sample from `d`.
 
@@ -45,7 +45,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); to_vec(d)((a = 
 function to_vec end
 
 """
-    VectorBijectors.optic_vec(d::Distribution)
+    VectorBijectors.optic_vec(dist)
 
 Returns a vector of optics (from VarNames.jl), which describe how each element in the
 vectorised sample from `d` can be accessed from the original sample.
@@ -82,7 +82,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); optic_vec(d)
 function optic_vec end
 
 """
-    VectorBijectors.from_linked_vec(d::Distribution)
+    VectorBijectors.from_linked_vec(dist)
 
 Returns a function that can be used to convert an unconstrained vector back to a sample from
 `d`.
@@ -110,7 +110,7 @@ julia> f = from_linked_vec(d); with_logabsdet_jacobian(f, [0.2, 1.0])
 function from_linked_vec end
 
 """
-    VectorBijectors.to_linked_vec(d::Distribution)
+    VectorBijectors.to_linked_vec(dist)
 
 Returns a function that can be used to convert a sample from `d` to an unconstrained vector.
 
@@ -140,7 +140,7 @@ julia> f = to_linked_vec(d); with_logabsdet_jacobian(f, (a = 0.2, b = 0.5))
 function to_linked_vec end
 
 """
-    VectorBijectors.linked_optic_vec(d::Distribution)
+    VectorBijectors.linked_optic_vec(dist)
 
 Returns a vector of optics (from VarNames.jl), which describe how each element in the
 unconstrained vector representation of a sample from `d` is related to the original sample.
@@ -184,7 +184,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); linked_optic_ve
 function linked_optic_vec end
 
 """
-    VectorBijectors.vec_length(d::Distribution)
+    VectorBijectors.vec_length(dist)
 
 Returns the length of the vector representation of a sample from `d`, i.e.,
 `length(to_vec(d)(rand(d)))`. However, it does this without actually drawing a sample.
@@ -204,7 +204,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); vec_length(d)
 function vec_length end
 
 """
-    VectorBijectors.linked_vec_length(d::Distribution)
+    VectorBijectors.linked_vec_length(dist)
 
 Returns the length of the unconstrained vector representation of a sample from `d`, i.e.,
 `length(to_linked_vec(d)(rand(d)))`. However, it does this without actually drawing a

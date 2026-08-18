@@ -10,7 +10,6 @@ using Test
     include("reshaped.jl")
     include("cholesky.jl")
     include("order.jl")
-    include("transformed.jl")
     include("product.jl")
 end
 

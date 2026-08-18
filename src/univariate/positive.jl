@@ -1,6 +1,3 @@
-# Bijectors for continuous univariate distributions which have support over the positive (or
-# non-negative) real numbers.
-
 """
     Exp(bound, sign) <: ScalarToScalarBijector
 
@@ -44,36 +41,3 @@ function with_logabsdet_jacobian(l::Log, x::Real)
     return (logx, -logx)
 end
 inverse(l::Log) = Exp(l.bound, l.sign)
-
-const POSITIVE_UNIVARIATES = Union{
-    D.BetaPrime,
-    D.Chi,
-    D.Chisq,
-    D.Erlang,
-    D.Exponential,
-    D.FDist,
-    # Wikipedia's definition of the Frechet distribution allows for a location parameter,
-    # which could cause its minimum to be nonzero. However, Distributions.jl's `Frechet`
-    # does not implement this, so we can lump it in here.
-    D.Frechet,
-    D.Gamma,
-    D.InverseGamma,
-    D.InverseGaussian,
-    D.Kolmogorov,
-    D.Lindley,
-    D.LogNormal,
-    D.NoncentralChisq,
-    D.NoncentralF,
-    D.Rayleigh,
-    D.Rician,
-    D.StudentizedRange,
-    D.Weibull,
-}
-VectorBijectors.scalar_to_scalar_bijector(d::POSITIVE_UNIVARIATES) = Log(minimum(d), 1)
-
-function VectorBijectors.scalar_to_scalar_bijector(
-    d::D.AffineDistribution{<:Any,<:Any,<:POSITIVE_UNIVARIATES},
-)
-    s = sign(D.scale(d))
-    return Log(s > 0 ? minimum(d) : maximum(d), s)
-end

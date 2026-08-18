@@ -16,34 +16,16 @@ const default_adtypes = [
     DI.AutoEnzyme(; mode=EC.Reverse, function_annotation=EC.Const),
 ]
 
-_get_value_support(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS
+# Check if a distribution is continuous.
+function _is_continuous end
 
-# Pretty-printing distributions. Otherwise things like MvNormal are super ugly.
-_name(d::D.Distribution) = nameof(typeof(d))
-_name(d::D.Censored) = "censored $(_name(d.uncensored)) [$(d.lower),$(d.upper)]"
-function _name(d::D.Truncated)
-    return "truncated $(_name(d.untruncated)) [$(d.lower),$(d.upper)]"
-end
-function _name(d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:D.Distribution})
-    return "reshaped $(_name(d.dist)) to size $(size(d))"
-end
-_name(d::D.OrderStatistic) = "order statistic $(_name(d.dist))"
-function _name(d::D.JointOrderStatistics)
-    return "joint order statistic $(_name(d.dist)) with length $(length(d))"
-end
+# Overload in order to pretty-print distributions. Otherwise things like MvNormal can get
+# super ugly.
+_name(d) = repr(d)
 
 # AD will give nonsense results at the limits of censored distributions (since the gradient
 # is not well-defined), so we avoid generating samples that are exactly at the limits.
-_rand_safe_ad(d::D.Distribution) = rand(d)
-_rand_safe_ad(d::D.Censored) = begin
-    a, b = d.lower, d.upper
-    while true
-        x = rand(d)
-        if x != a && x != b
-            return x
-        end
-    end
-end
+function _rand_safe_ad end
 
 # isapprox is not defined for some samples (specifically Cholesky and NTs), so we need to
 # patch that
@@ -71,180 +53,24 @@ end
 # Jacobian is not square). See
 # https://turinglang.org/Bijectors.jl/stable/defining_examples/#Stereographic-projection
 # for an example of how to work around this issue.
+#
 # Here we define a function which converts a sample from `d` to a vector of length
 # `linked_vec_length(d)` but does NOT perform linking. This allows us to compute the
 # Jacobian from `to_vec_for_logjac_test(d)(x)` to `to_linked_vec(d)(x)`, which will be
 # square. The fallback definition is just to_vec(d), but we can overload this for specific
 # distributions.
-to_vec_for_logjac_test(d::D.Distribution) = to_vec(d)
-from_vec_for_logjac_test(d::D.Distribution) = from_vec(d)
-to_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = x -> x[1:(end-1)]
-from_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = y -> vcat(y, 1 - sum(y))
-function to_vec_for_logjac_test(
-    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution},
-)
-    # Internal function, but we use this to avoid a LOT of code duplication
-    return VectorBijectors._make_transform(
-        d.dists,
-        to_vec_for_logjac_test,
-        linked_vec_length,
-        ProductVecTransform,
-    )
-end
-function from_vec_for_logjac_test(
-    d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution},
-)
-    return VectorBijectors._make_transform(
-        d.dists,
-        from_vec_for_logjac_test,
-        linked_vec_length,
-        ProductVecInvTransform,
-    )
-end
-function to_vec_for_logjac_test(
-    ::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}},
-)
-    return x -> vec(x)[1:(end-1)]
-end
-function from_vec_for_logjac_test(
-    d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:Union{D.Dirichlet,D.MvLogitNormal}},
-)
-    return y -> reshape(vcat(y, 1 - sum(y)), size(d))
-end
-struct CholeskyToVecForLogjac
-    n::Int
-    uplo::Char
-end
-function (c::CholeskyToVecForLogjac)(x::Cholesky{T}) where {T<:Number}
-    # Same as to_vec, but skip the diagonal entries.
-    indices = VectorBijectors._get_cartesian_indices(c.n, c.uplo)
-    vec_len = div(c.n * (c.n - 1), 2)
-    xvec = Vector{T}(undef, vec_len)
-    idx = 1
-    for (i, j) in indices
-        if i != j
-            xvec[idx] = x.UL[i, j]
-            idx += 1
-        end
-    end
-    return xvec
-end
-to_vec_for_logjac_test(d::D.LKJCholesky) = CholeskyToVecForLogjac(first(size(d)), d.uplo)
-struct CholeskyFromVecForLogjac
-    n::Int
-    uplo::Char
-end
-function (c::CholeskyFromVecForLogjac)(xvec::AbstractVector{T}) where {T<:Number}
-    # Same as from_vec, but skip the diagonal entries, and reconstruct them
-    # from the fact that the rows/columns are unit-norm.
-    indices = VectorBijectors._get_cartesian_indices(c.n, c.uplo)
-    x = if c.uplo == 'U'
-        Cholesky(UpperTriangular(zeros(T, c.n, c.n)))
-    else
-        Cholesky(LowerTriangular(zeros(T, c.n, c.n)))
-    end
-    idx = 1
-    for (i, j) in indices
-        if i != j
-            x.UL[i, j] = xvec[idx]
-            idx += 1
-        end
-    end
-    for i in 1:(c.n)
-        # x.UL[i, i] is still zero now, so we can compute the sum-of-squares
-        # including it, before then calculating it
-        sum_sq = if c.uplo == 'U'
-            sum(abs2, x.UL[:, i])
-        else
-            sum(abs2, x.UL[i, :])
-        end
-        x.UL[i, i] = sqrt(one(T) - sum_sq)
-    end
-    return x
-end
-function from_vec_for_logjac_test(d::D.LKJCholesky)
-    return CholeskyFromVecForLogjac(first(size(d)), d.uplo)
-end
-
-function to_vec_for_logjac_test(d::D.ReshapedDistribution)
-    return rx -> begin
-        x = VectorBijectors._reshape_or_only(rx, size(d.dist))
-        return to_vec_for_logjac_test(d.dist)(x)
-    end
-end
-function from_vec_for_logjac_test(d::D.ReshapedDistribution)
-    return yvec -> begin
-        x = from_vec_for_logjac_test(d.dist)(yvec)
-        return VectorBijectors._reshape_or_only(x, size(d))
-    end
-end
-
-# These are positive (semi)definite matrix distributions, which are symmetric, so we will
-# just vectorise the lower-triangular part.
-function to_vec_for_logjac_test(d::Union{D.Wishart,D.InverseWishart})
-    n = first(size(d))
-    return x -> begin
-        vec_len = div(n * (n + 1), 2)
-        xvec = zeros(eltype(x), vec_len)
-        idx = 1
-        for i in 1:n, j in 1:i
-            xvec[idx] = x[i, j]
-            idx += 1
-        end
-        return xvec
-    end
-end
-function from_vec_for_logjac_test(d::Union{D.Wishart,D.InverseWishart})
-    n = first(size(d))
-    return xvec -> begin
-        x = zeros(eltype(xvec), n, n)
-        idx = 1
-        for i in 1:n, j in 1:i
-            x[i, j] = xvec[idx]
-            x[j, i] = xvec[idx]
-            idx += 1
-        end
-        return x
-    end
-end
-
-# These are correlation matrices - they are symmetric and the diagonal is all ones
-function to_vec_for_logjac_test(d::D.LKJ)
-    n = first(size(d))
-    return x -> begin
-        vec_len = div(n * (n - 1), 2)
-        xvec = zeros(eltype(x), vec_len)
-        idx = 1
-        for i in 1:n, j in 1:(i-1)
-            xvec[idx] = x[i, j]
-            idx += 1
-        end
-        return xvec
-    end
-end
-function from_vec_for_logjac_test(d::D.LKJ)
-    n = first(size(d))
-    return xvec -> begin
-        x = ones(eltype(xvec), n, n)
-        idx = 1
-        for i in 1:n, j in 1:(i-1)
-            x[i, j] = xvec[idx]
-            x[j, i] = xvec[idx]
-            idx += 1
-        end
-        return x
-    end
-end
+to_vec_for_logjac_test(d) = to_vec(d)
+from_vec_for_logjac_test(d) = from_vec(d)
 
 function test_all(
-    d::D.Distribution;
+    d;
     expected_zero_allocs=(),
     adtypes=default_adtypes,
     ad_atol=1e-10,
     ad_rtol=sqrt(eps()),
     roundtrip_atol=1e-10,
     roundtrip_rtol=sqrt(eps()),
-    test_in_support=(_get_value_support(d) <: D.Continuous),
+    test_in_support=_is_continuous(d),
     test_construction_type_stable=true,
 )
     @info "Testing $(_name(d))"
@@ -265,7 +91,7 @@ Test that from_vec and to_vec are inverses, and likewise for from_linked_vec and
 to_linked_vec. This test checks `x ≈ from_vec(d)(to_vec(d)(x))` for random samples `x ~ d`
 (and likewise for the linked transforms).
 """
-function test_roundtrip(d::D.Distribution)
+function test_roundtrip(d)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
     @testset "roundtrip: $(_name(d))" begin
@@ -295,10 +121,14 @@ function test_roundtrip(d::D.Distribution)
     end
 end
 
+# The implementation of this requires Distributions.jl so has to go in the ext
+can_test_in_support(d, x) = false
+test_in_support(d, x) = error("not implemented")
+
 """
 Test that from_linked_vec and to_linked_vec are inverses.
 
-If `test_in_support`, then this additionally also tests that `from_linked_vec(dist)`
+If `test_in_support_flag`, then this additionally also tests that `from_linked_vec(dist)`
 actually does map random vectors to the support of the distribution (i.e., `finv(y)` for
 some random `y` is in the support of `d`).
 
@@ -306,19 +136,16 @@ If the distribution is not continuous, we can't really check this (in fact the t
 meaningless). So for discrete distributions this test is skipped. There are also other
 occasions where we disable this because of e.g. numerical issues, like for LKJ.
 """
-function test_roundtrip_inverse(d::D.Distribution, test_in_support, atol, rtol)
+function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
     @testset "roundtrip inverse (linked): $(_name(d))" begin
         len = linked_vec_length(d)
-
-        # Check that Distributions.jl can actually run insupport. Sometimes it can't, e.g.
-        # with product_distribution(MvNormal(), MvNormal()), even though that function is
-        # well-defined.
         x = rand(d)
-        if test_in_support && (!hasmethod(D.insupport, Tuple{typeof(d),typeof(x)}))
-            @info "No method for Distributions.insupport($(typeof(d)), $(typeof(x))), skipping in-support test"
-            test_in_support = false
+
+        if test_in_support_flag && !can_test_in_support(d, x)
+            @warn "Skipping test_in_support for $(_name(d)) because it is not implemented"
+            test_in_support_flag = false
         end
 
         for _ in 1:100
@@ -326,31 +153,15 @@ function test_roundtrip_inverse(d::D.Distribution, test_in_support, atol, rtol)
                 ffwd = to_linked_vec(d)
                 frvs = from_linked_vec(d)
                 x = frvs(y)
-                if test_in_support
-                    in_support = D.insupport(d, x)
-                    if in_support isa Bool
-                        @test in_support
-                    elseif in_support isa AbstractArray{Bool,0}
-                        # This happens sometimes:
-                        # https://github.com/JuliaStats/Distributions.jl/issues/2026
-                        @test in_support[]
-                    else
-                        # We _could_ just check `all(in_support)`, but I don't want to be
-                        # caught off-guard by any bugs in the bijector's implementation that
-                        # returns a wrong shape/type of `x`.
-                        error(
-                            "Distributions.insupport returned unexpected type: $(typeof(in_support))",
-                        )
-                    end
+                if test_in_support_flag
+                    test_in_support(d, x)
                 end
 
                 ynew = ffwd(x)
-                if d isa D.JointOrderStatistics && (
-                    any(isnan, x) ||
+                if any(isnan, x) ||
                     !all(isfinite, x) ||
                     any(isnan, ynew) ||
                     !all(isfinite, ynew)
-                )
                     @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
                 else
                     @test _isapprox_safe(y, ynew; atol=atol, rtol=rtol)
@@ -369,7 +180,7 @@ distributions with heterogeneous components), but once the bijector is created, 
 conversions should be type stable. To disable type stability checks for the construction,
 set `test_construction_type_stable=false`.
 """
-function test_type_stability(d::D.Distribution, test_construction_type_stable=true)
+function test_type_stability(d, test_construction_type_stable=true)
     x = rand(d)
     @testset "type stability: $(_name(d))" begin
         @testset let x = x, d = d
@@ -403,7 +214,7 @@ end
 Test that the optics produced by `optic_vec` for the given distribution `d` line up with the
 values produced by `to_vec`.
 """
-function test_optics(d::D.Distribution)
+function test_optics(d)
     @testset "optic_vec: $(_name(d))" begin
         o = optic_vec(d)
         x = rand(d)
@@ -457,7 +268,7 @@ Test that the lengths of the vectors produced by the conversions to vector and l
 vector forms for the given distribution `d` match those reported by `vec_length` and
 `linked_vec_length`.
 """
-function test_vec_lengths(d::D.Distribution)
+function test_vec_lengths(d)
     @testset "vector lengths: $(_name(d))" begin
         for _ in 1:10
             @testset let x = rand(d), d = d
@@ -481,7 +292,7 @@ Test that the conversions to and from vector and linked vector forms for the giv
 distribution `d` do not cause any heap allocations for the functions specified in
 `expected_zero_allocs`.
 """
-function test_allocations(d::D.Distribution, expected_zero_allocs=())
+function test_allocations(d, expected_zero_allocs=())
     ALLOWED_FUNCTIONS = (to_vec, from_vec, to_linked_vec, from_linked_vec)
     if any(f -> !(f in ALLOWED_FUNCTIONS), expected_zero_allocs)
         throw(ArgumentError("expected_zero_allocs can only contain: $ALLOWED_FUNCTIONS"))
@@ -526,7 +337,7 @@ end
 Test that the analytical log-Jacobians provided in this package are correct by comparing
 against AD-calculated log-Jacobians for the given distribution `d`.
 """
-function test_logjac(d::D.Distribution, atol, rtol)
+function test_logjac(d, atol, rtol)
     # Vectorisation logjacs should be zero because they are just reshapes.
     @testset "logjac: $(_name(d))" begin
         for _ in 1:100
@@ -596,14 +407,14 @@ end
 Test that various AD backends can differentiate the conversions to and from vector and
 linked vector forms for the given distribution `d`.
 """
-function test_ad(d::D.Distribution, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
+function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
     # If `d` is a discrete distribution, Mooncake refuses to differentiate through the
     # transforms (which are just identity transforms). Likewise, Enzyme will throw an
     # error saying that the output is Const but was not marked as such.
     #
     # Arguably, the other AD backends probably should also refuse to differentiate it, but
     # they do actually return the right 'gradients' so we can test them.
-    adtypes = if d isa D.Distribution{<:Any,D.Discrete}
+    adtypes = if !_is_continuous(d)
         filter(adtypes) do adtype
             !(
                 adtype isa DI.AutoMooncake ||
