@@ -347,47 +347,7 @@ end
     return Expr(:block, exprs...)
 end
 
-@generated function _make_transform_inner(
-    dists::NTuple{NDists,D.Distribution},
-    indiv_transform_fn,
-    length_fn,
-    struct_type,
-) where {NDists}
-    exprs = []
-    trfms = Expr(:tuple)
-    for i in 1:NDists
-        push!(trfms.args, :(indiv_transform_fn(dists[$i])))
-    end
-    push!(exprs, :(trfms = $trfms))
-    push!(exprs, :(ranges = ()))
-    push!(exprs, :(offset = 1))
-    for i in 1:NDists
-        push!(exprs, :(this_length = length_fn(dists[$i])))
-        push!(exprs, :(ranges = (ranges..., offset:(offset+this_length-1))))
-        push!(exprs, :(offset += this_length))
-    end
-    push!(exprs, :(return struct_type(trfms, ranges, size(dists[1]))))
-    return Expr(:block, exprs...)
-end
-
-function _make_transform_inner(
-    dists::AbstractArray{<:D.Distribution},
-    indiv_transform_fn,
-    length_fn,
-    struct_type,
-)
-    # map(indiv_transform_fn, dists) causes some Enzyme errors when used with DPPL
-    # https://github.com/TuringLang/DynamicPPL.jl/issues/1304
-    trfms = indiv_transform_fn.(dists)
-    ranges = Array{UnitRange{Int}}(undef, size(dists)...)
-    offset = 1
-    for (i, dist) in enumerate(dists)
-        this_length = length_fn(dist)
-        ranges[i] = offset:(offset+this_length-1)
-        offset += this_length
-    end
-    return struct_type(trfms, ranges, size(dists[1]))
-end
+function _make_transform_inner end
 
 _sz(t::Tuple) = (length(t),)
 _sz(t::AbstractArray) = size(t)
@@ -408,47 +368,6 @@ function _make_transform(
         struct_type(trfms, nothing, size(d))
     else
         _make_transform_inner(dists, indiv_transform_fn, length_fn, struct_type)
-    end
-end
-
-for (product_type, dist_field) in (
-    (D.ProductNamedTupleDistribution, :dists),
-    (D.ProductDistribution, :dists),
-    # Annoyingly, vectors of univariate distributions become D.Product rather than
-    # D.ProductDistribution (which handles all other tuple/arrays).
-    (D.Product, :v),
-)
-    @eval begin
-        function from_vec(d::$product_type)
-            return _make_transform(
-                d.$dist_field,
-                from_vec,
-                vec_length,
-                ProductVecInvTransform,
-            )
-        end
-        function from_linked_vec(d::$product_type)
-            return _make_transform(
-                d.$dist_field,
-                from_linked_vec,
-                linked_vec_length,
-                ProductVecInvTransform,
-            )
-        end
-        function to_vec(d::$product_type)
-            return _make_transform(d.$dist_field, to_vec, vec_length, ProductVecTransform)
-        end
-        function to_linked_vec(d::$product_type)
-            return _make_transform(
-                d.$dist_field,
-                to_linked_vec,
-                linked_vec_length,
-                ProductVecTransform,
-            )
-        end
-
-        vec_length(d::$product_type) = sum(vec_length, d.$dist_field)
-        linked_vec_length(d::$product_type) = sum(linked_vec_length, d.$dist_field)
     end
 end
 
@@ -479,32 +398,3 @@ end
 # Add an extra symbol to the front of an optic.
 prepend_symbol(s::Symbol, optic::VarNames.AbstractOptic) = VarNames.Property{s}(optic)
 prepend_symbol(::Symbol, nothing) = nothing
-
-for f in (:optic_vec, :linked_optic_vec)
-    for (product_type, dist_field) in ((D.Product, :v), (D.ProductDistribution, :dists))
-        @eval begin
-            function $f(d::$product_type)
-                optics = Union{}[]
-                idxs = _cartesian_indices(d.$dist_field)
-                for (idx, dist) in zip(idxs, d.$dist_field)
-                    this_dist_optics = $f(dist)
-                    new_optics = map(optic -> append_index(optic, idx), this_dist_optics)
-                    optics = vcat(optics, new_optics)
-                end
-                return optics
-            end
-        end
-    end
-
-    @eval begin
-        function $f(d::D.ProductNamedTupleDistribution)
-            optics = Union{}[]
-            for (nm, dist) in pairs(d.dists)
-                this_dist_optics = $f(dist)
-                new_optics = map(optic -> prepend_symbol(nm, optic), this_dist_optics)
-                optics = vcat(optics, new_optics)
-            end
-            return optics
-        end
-    end
-end

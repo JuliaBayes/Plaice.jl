@@ -26,10 +26,3 @@ end
 function with_logabsdet_jacobian(r::Reshape, x::AbstractArray)
     return reshape(x, r.size), 0.0
 end
-
-to_vec(d::D.MatrixDistribution) = Vec(size(d))
-from_vec(d::D.MatrixDistribution) = Reshape(size(d))
-vec_length(d::D.MatrixDistribution) = prod(size(d))
-function optic_vec(d::D.MatrixDistribution)
-    return map(c -> VarNames.Index(c.I, (;)), vec(CartesianIndices(size(d))))
-end

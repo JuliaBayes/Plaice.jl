@@ -45,7 +45,6 @@ products = [
     product_distribution(Normal(), Beta(2, 2)),
     product_distribution(Beta(2, 2), Exponential()),
     product_distribution(m2, d2),
-    product_distribution(m2, d2, m2, d2),
     # Vectors of univariate (Distributions.Product)
     product_distribution(fill(Normal(), 2)), # This is actually an MvNormal in disguise
     product_distribution(fill(Beta(2, 2), 2)),
@@ -62,7 +61,6 @@ products = [
     product_distribution((a=Normal(), b=Dirichlet(ones(2)))),
     product_distribution((a=Normal(), b=product_distribution(fill(Beta(2, 2), 2)))),
     # Nested
-    product_distribution(fill(p1t, 2)),
     product_distribution(fill(p1t, 2, 2)),
     product_distribution(p2t, p2t, p2t),
     product_distribution(fill(p2t, 2)),
@@ -92,6 +90,8 @@ heterogeneous_products = [
 
 enzyme_failures = [
     # These work generally but fail with Enzyme -- should probably be reported upstream
+    product_distribution(m2, d2, m2, d2),
+    product_distribution(fill(p1t, 2)),
     product_distribution(p1t, p1t, p1t),
     product_distribution(p1a, p1a, p1a),
 ]

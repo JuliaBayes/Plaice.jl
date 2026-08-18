@@ -92,22 +92,6 @@ function has_constant_vec_bijector(::Type{<:AbstractArray{T}}) where {T}
 end
 has_constant_vec_bijector(t::Type{<:Tuple}) = has_constant_vec_bijector(eltype(t))
 has_constant_vec_bijector(::Type) = false
-has_constant_vec_bijector(::Type{<:IDENTITY_UNIVARIATES}) = true
-has_constant_vec_bijector(::Type{<:POSITIVE_UNIVARIATES}) = true
-# between 0 and 1
-function has_constant_vec_bijector(
-    ::Type{<:Union{D.Beta,D.KSOneSided,D.NoncentralBeta,D.LogitNormal}},
-)
-    return true
-end
-has_constant_vec_bijector(::Type{<:D.DiscreteUnivariateDistribution}) = true
-# Multivariates
-has_constant_vec_bijector(::Type{<:D.AbstractMvNormal}) = true
-has_constant_vec_bijector(::Type{<:D.AbstractMvTDist}) = true
-has_constant_vec_bijector(::Type{<:D.AbstractMvLogNormal}) = true
-has_constant_vec_bijector(::Type{<:SIMPLEX_MULTIVARIATES}) = true
-has_constant_vec_bijector(::Type{<:D.DiscreteMultivariateDistribution}) = true
-
 function (t::ProductVecTransform{<:Elementwise{F,Dims{M}},Nothing,Dims{N}})(
     x::AbstractArray{T},
 ) where {F,M,N,T}

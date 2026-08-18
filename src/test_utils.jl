@@ -110,7 +110,7 @@ function test_roundtrip(d)
                 frvs = from_linked_vec(d)
                 xnew = frvs(ffwd(x))
                 # https://github.com/TuringLang/Bijectors.jl/issues/441
-                if d isa D.JointOrderStatistics &&
+                if _is_joint_order_statistics(d) &&
                    (any(isnan, xnew) || !all(isfinite, xnew))
                     @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
                 else
@@ -120,6 +120,8 @@ function test_roundtrip(d)
         end
     end
 end
+
+_is_joint_order_statistics(::Any) = false
 
 # The implementation of this requires Distributions.jl so has to go in the ext
 can_test_in_support(d, x) = false
@@ -158,10 +160,12 @@ function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
                 end
 
                 ynew = ffwd(x)
-                if any(isnan, x) ||
+                if _is_joint_order_statistics(d) && (
+                    any(isnan, x) ||
                     !all(isfinite, x) ||
                     any(isnan, ynew) ||
                     !all(isfinite, ynew)
+                )
                     @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
                 else
                     @test _isapprox_safe(y, ynew; atol=atol, rtol=rtol)

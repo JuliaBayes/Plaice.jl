@@ -3,7 +3,7 @@
 using LinearAlgebra: Cholesky, UpperTriangular, LowerTriangular
 using Test: @test
 
-VB._is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS
+VB._is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS <: D.Continuous
 
 VB._name(d::D.Distribution) = nameof(typeof(d))
 VB._name(d::D.Censored) = "censored $(VB._name(d.uncensored)) [$(d.lower),$(d.upper)]"
@@ -16,6 +16,12 @@ end
 VB._name(d::D.OrderStatistic) = "order statistic $(VB._name(d.dist))"
 function VB._name(d::D.JointOrderStatistics)
     return "joint order statistic $(VB._name(d.dist)) with length $(length(d))"
+end
+function VB._name(d::D.Product)
+    return "ProdDist($(join((VB._name(dist) for dist in d.v), ", ")))"
+end
+function VB._name(d::Union{D.ProductDistribution,D.ProductNamedTupleDistribution})
+    return "ProdDist($(join((VB._name(dist) for dist in d.dists), ", ")))"
 end
 
 VB._rand_safe_ad(d::D.Distribution) = rand(d)
@@ -37,7 +43,7 @@ function VB.to_vec_for_logjac_test(
     # Internal function, but we use this to avoid a LOT of code duplication
     return VB._make_transform(
         d.dists,
-        to_vec_for_logjac_test,
+        VB.to_vec_for_logjac_test,
         VB.linked_vec_length,
         VB.ProductVecTransform,
     )
@@ -47,7 +53,7 @@ function VB.from_vec_for_logjac_test(
 )
     return VB._make_transform(
         d.dists,
-        from_vec_for_logjac_test,
+        VB.from_vec_for_logjac_test,
         VB.linked_vec_length,
         VB.ProductVecInvTransform,
     )

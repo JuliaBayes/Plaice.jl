@@ -1,0 +1,132 @@
+@generated function VB._make_transform_inner(
+    dists::NTuple{NDists,D.Distribution},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
+) where {NDists}
+    exprs = []
+    trfms = Expr(:tuple)
+    for i in 1:NDists
+        push!(trfms.args, :(indiv_transform_fn(dists[$i])))
+    end
+    push!(exprs, :(trfms = $trfms))
+    push!(exprs, :(ranges = ()))
+    push!(exprs, :(offset = 1))
+    for i in 1:NDists
+        push!(exprs, :(this_length = length_fn(dists[$i])))
+        push!(exprs, :(ranges = (ranges..., offset:(offset+this_length-1))))
+        push!(exprs, :(offset += this_length))
+    end
+    push!(exprs, :(return struct_type(trfms, ranges, size(dists[1]))))
+    return Expr(:block, exprs...)
+end
+
+function VB._make_transform_inner(
+    dists::AbstractArray{<:D.Distribution},
+    indiv_transform_fn,
+    length_fn,
+    struct_type,
+)
+    # map(indiv_transform_fn, dists) causes some Enzyme errors when used with DPPL
+    # https://github.com/TuringLang/DynamicPPL.jl/issues/1304
+    trfms = indiv_transform_fn.(dists)
+    ranges = Array{UnitRange{Int}}(undef, size(dists)...)
+    offset = 1
+    for (i, dist) in enumerate(dists)
+        this_length = length_fn(dist)
+        ranges[i] = offset:(offset+this_length-1)
+        offset += this_length
+    end
+    return struct_type(trfms, ranges, size(dists[1]))
+end
+
+for (product_type, dist_field) in (
+    (D.ProductNamedTupleDistribution, :dists),
+    (D.ProductDistribution, :dists),
+    # Annoyingly, vectors of univariate distributions become D.Product rather than
+    # D.ProductDistribution (which handles all other tuple/arrays).
+    (D.Product, :v),
+)
+    @eval begin
+        function VB.from_vec(d::$product_type)
+            return VB._make_transform(
+                d.$dist_field,
+                VB.from_vec,
+                VB.vec_length,
+                VB.ProductVecInvTransform,
+            )
+        end
+        function VB.from_linked_vec(d::$product_type)
+            return VB._make_transform(
+                d.$dist_field,
+                VB.from_linked_vec,
+                VB.linked_vec_length,
+                VB.ProductVecInvTransform,
+            )
+        end
+        function VB.to_vec(d::$product_type)
+            return VB._make_transform(
+                d.$dist_field,
+                VB.to_vec,
+                VB.vec_length,
+                VB.ProductVecTransform,
+            )
+        end
+        function VB.to_linked_vec(d::$product_type)
+            return VB._make_transform(
+                d.$dist_field,
+                VB.to_linked_vec,
+                VB.linked_vec_length,
+                VB.ProductVecTransform,
+            )
+        end
+
+        VB.vec_length(d::$product_type) = sum(VB.vec_length, d.$dist_field)
+        VB.linked_vec_length(d::$product_type) = sum(VB.linked_vec_length, d.$dist_field)
+    end
+end
+
+for f in (:optic_vec, :linked_optic_vec)
+    for (product_type, dist_field) in ((D.Product, :v), (D.ProductDistribution, :dists))
+        @eval begin
+            function VB.$f(d::$product_type)
+                optics = Union{}[]
+                idxs = VB._cartesian_indices(d.$dist_field)
+                for (idx, dist) in zip(idxs, d.$dist_field)
+                    this_dist_optics = VB.$f(dist)
+                    new_optics = map(optic -> VB.append_index(optic, idx), this_dist_optics)
+                    optics = vcat(optics, new_optics)
+                end
+                return optics
+            end
+        end
+    end
+
+    @eval begin
+        function VB.$f(d::D.ProductNamedTupleDistribution)
+            optics = Union{}[]
+            for (nm, dist) in pairs(d.dists)
+                this_dist_optics = VB.$f(dist)
+                new_optics = map(optic -> VB.prepend_symbol(nm, optic), this_dist_optics)
+                optics = vcat(optics, new_optics)
+            end
+            return optics
+        end
+    end
+end
+
+VB.has_constant_vec_bijector(::Type{<:IDENTITY_UNIVARIATES}) = true
+VB.has_constant_vec_bijector(::Type{<:POSITIVE_UNIVARIATES}) = true
+# between 0 and 1
+function VB.has_constant_vec_bijector(
+    ::Type{<:Union{D.Beta,D.KSOneSided,D.NoncentralBeta,D.LogitNormal}},
+)
+    return true
+end
+VB.has_constant_vec_bijector(::Type{<:D.DiscreteUnivariateDistribution}) = true
+# Multivariates
+VB.has_constant_vec_bijector(::Type{<:D.AbstractMvNormal}) = true
+VB.has_constant_vec_bijector(::Type{<:D.AbstractMvTDist}) = true
+VB.has_constant_vec_bijector(::Type{<:D.AbstractMvLogNormal}) = true
+VB.has_constant_vec_bijector(::Type{<:SIMPLEX_MULTIVARIATES}) = true
+VB.has_constant_vec_bijector(::Type{<:D.DiscreteMultivariateDistribution}) = true
