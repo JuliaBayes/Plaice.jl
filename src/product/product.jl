@@ -124,17 +124,9 @@ end
     return Expr(:block, exprs...)
 end
 
-# Regarding formatting: the autoformatter will turn this into
-#     @generated function (
-#         t::...
-#     )(x::...)
-# which is broken on 1.12 because of a parser bug.
-# https://github.com/JuliaLang/JuliaSyntax.jl/pull/580
-#! format: off
 @generated function (t::ProductVecTransform{<:NTuple{P,Any},<:NTuple{P,Any},<:NTuple{N,Int}})(
     x::AbstractArray{T}
 ) where {P,N,T}
-#! format: on
     exprs = []
     push!(exprs, :(total_length = sum(length, t.ranges)))
     push!(exprs, :(y = Vector{T}(undef, total_length)))
