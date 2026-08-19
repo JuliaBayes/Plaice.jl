@@ -65,7 +65,7 @@ end
 
 # zero(T) but with fallback for non-numeric T.
 _fzero(::Type{T}) where {T<:Number} = zero(T)
-_fzero(@nospecialize(T)) = 0.0
+_fzero(@nospecialize(T)) = false
 
 """
 Return an object that can be iterated over to obtain the values for each distribution

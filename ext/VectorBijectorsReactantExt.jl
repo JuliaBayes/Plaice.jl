@@ -39,6 +39,24 @@ function VB.test_reactant(d)
             @test Float64(result_and_lj[2]) ≈ expected_ladj
         end
 
+        @testset "gradient: forward transform" begin
+            # Have to use sum to collapse to scalar since jacobian doesn't work inside
+            # Reactant. https://github.com/EnzymeAD/Reactant.jl/pull/2839
+            sum_fwd(v) = sum(ffwd(v))
+            ref_grad = DI.gradient(sum_fwd, VB.ref_adtype, xvec)
+            result = @allowscalar @jit Enzyme.gradient(Enzyme.Reverse, sum_fwd, xvec_r)
+            @test Array(only(result)) ≈ ref_grad
+        end
+
+        @testset "gradient: reverse transform" begin
+            # Have to use sum to collapse to scalar since jacobian doesn't work inside
+            # Reactant. https://github.com/EnzymeAD/Reactant.jl/pull/2839
+            sum_rvs(v) = sum(frvs(v))
+            ref_grad = DI.gradient(sum_rvs, VB.ref_adtype, yvec)
+            result = @allowscalar @jit Enzyme.gradient(Enzyme.Reverse, sum_rvs, yvec_r)
+            @test Array(only(result)) ≈ ref_grad
+        end
+
         @testset "gradient: forward ladj" begin
             ladj_fwd(v) = last(VB.with_logabsdet_jacobian(ffwd, v))
             ref_grad = DI.gradient(ladj_fwd, VB.ref_adtype, xvec)

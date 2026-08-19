@@ -57,12 +57,14 @@ end
 It is good practice to let the type of the input determine the type of the log-Jacobian term here.
 However, you might also ask: since a cyclic permutation is also well-defined for arrays of non-real types, should we also allow that?
 We can do so by creating a new method, but we would have to make a choice as to the type of the log-Jacobian term, since we cannot derive it from the input type.
-Here, we will choose `Float64`:
+
+We could choose `0.0::Float64`, but that is actually not the best idea: if the Float64 is added to another value, say a Float32, then the result will be promoted to a Float64, which is not ideal if we wanted to keep the result as a Float32.
+To avoid this, we choose the 'lowest' type in the promotion hierarchy, which is `false::Bool`.
 
 ```@example cyclic
 function VectorBijectors.with_logabsdet_jacobian(b::CircShift, x::AbstractVector)
     y = circshift(x, b.shift)
-    return y, 0.0
+    return y, false
 end
 ```
 
