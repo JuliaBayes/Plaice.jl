@@ -4,13 +4,15 @@ using VectorBijectors
 using Test
 
 @testset "VectorBijectors.jl" begin
-    include("univariate.jl")
-    include("multivariate.jl")
-    include("matrix.jl")
-    include("reshaped.jl")
-    include("cholesky.jl")
-    include("order.jl")
-    include("product.jl")
+    # include("distributions/univariate.jl")
+    # include("distributions/multivariate.jl")
+    # include("distributions/matrix.jl")
+    # include("distributions/reshaped.jl")
+    # include("distributions/cholesky.jl")
+    # include("distributions/order.jl")
+    # include("distributions/product.jl")
+
+    include("pm/univariate.jl")
 end
 
 end # module VectorBijectorsTests

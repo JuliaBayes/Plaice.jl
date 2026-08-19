@@ -74,6 +74,12 @@ function test_all(
     test_construction_type_stable=true,
 )
     @info "Testing $(test_name(d))"
+
+    reactant_loaded = any(
+        k -> k.uuid == Base.UUID("3c362404-f566-11ee-1572-e11a4b42c853"),
+        keys(Base.loaded_modules),
+    )
+
     @testset "$(test_name(d))" begin
         test_roundtrip(d)
         test_roundtrip_inverse(d, test_in_support, roundtrip_atol, roundtrip_rtol)
@@ -83,6 +89,9 @@ function test_all(
         test_allocations(d, expected_zero_allocs)
         test_logjac(d, ad_atol, ad_rtol)
         test_ad(d, adtypes, ad_atol, ad_rtol)
+        if reactant_loaded
+            test_reactant(d)
+        end
     end
 end
 
@@ -440,10 +449,12 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
         ref_grad_ladj = DI.gradient(ladj, ref_adtype, xvec)
 
         for adtype in adtypes
+            # Check that the forward transform is differentiable
             @testset let x = x, adtype = adtype, d = d
                 ad_jac = DI.jacobian(ffwd, adtype, xvec)
                 @test ref_jac ≈ ad_jac atol = atol rtol = rtol
             end
+            # Check that the logjac calculation itself is differentiable
             @testset let x = x, adtype = adtype, d = d
                 ad_grad_ladj = DI.gradient(ladj, adtype, xvec)
                 @test ref_grad_ladj ≈ ad_grad_ladj atol = atol rtol = rtol
@@ -461,11 +472,12 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
         ref_grad_ladj = DI.gradient(ladj, ref_adtype, yvec)
 
         for adtype in adtypes
+            # Check that the reverse transform is differentiable
             @testset let x = x, adtype = adtype, d = d
                 ad_jac = DI.jacobian(frvs, adtype, yvec)
                 @test ref_jac ≈ ad_jac atol = atol rtol = rtol
             end
-
+            # Check that the logjac calculation itself is differentiable
             @testset let x = x, adtype = adtype, d = d
                 ad_grad_ladj = DI.gradient(ladj, adtype, yvec)
                 @test ref_grad_ladj ≈ ad_grad_ladj atol = atol rtol = rtol
@@ -473,3 +485,6 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
         end
     end
 end
+
+# Overloaded in ReactantExt
+function test_reactant end
