@@ -124,8 +124,12 @@ end
     return Expr(:block, exprs...)
 end
 
-@generated function (t::ProductVecTransform{<:NTuple{P,Any},<:NTuple{P,Any},<:NTuple{N,Int}})(
-    x::AbstractArray{T}
+@generated function (t::ProductVecTransform{
+    <:NTuple{P,Any},
+    <:NTuple{P,Any},
+    <:NTuple{N,Int},
+})(
+    x::AbstractArray{T},
 ) where {P,N,T}
     exprs = []
     push!(exprs, :(total_length = sum(length, t.ranges)))
@@ -186,7 +190,7 @@ end
     return Expr(:block, exprs...)
 end
 @generated function (t::ProductVecTransform{<:NamedTuple{names}})(
-    x::NamedTuple{names}
+    x::NamedTuple{names},
 ) where {names}
     expr = Expr(:tuple)
     for nm in names
@@ -239,8 +243,12 @@ _cartesian_indices(x::AbstractArray) = CartesianIndices(x)
     return Expr(:block, exprs...)
 end
 
-@generated function (t::ProductVecInvTransform{<:NTuple{P,Any},<:NTuple{P,Any},<:NTuple{N,Int}})(
-    y::AbstractVector{T}
+@generated function (t::ProductVecInvTransform{
+    <:NTuple{P,Any},
+    <:NTuple{P,Any},
+    <:NTuple{N,Int},
+})(
+    y::AbstractVector{T},
 ) where {P,N,T}
     # P = number of distributions in the product distribution
     # N = dimension of each distribution

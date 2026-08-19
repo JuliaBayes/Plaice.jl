@@ -5,7 +5,9 @@ function VB.optic_vec(d::D.LKJCholesky)
     else
         :L
     end
-    return [VarNames.@opticof(_.$sym[i, j]) for (i, j) in VB._get_cartesian_indices(n, d.uplo)]
+    return [
+        VarNames.@opticof(_.$sym[i, j]) for (i, j) in VB._get_cartesian_indices(n, d.uplo)
+    ]
 end
 
 VB.from_vec(d::D.LKJCholesky) = VB.CholeskyUnVec(first(size(d)), d.uplo)

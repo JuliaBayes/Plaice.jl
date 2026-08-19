@@ -98,7 +98,6 @@ enzyme_failures = [
     product_distribution(m2, d2),
     # https://github.com/EnzymeAD/Enzyme.jl/issues/3466
     product_distribution(fill(p1t, 2, 2)),
-
     product_distribution(m2, d2, m2, d2),
     product_distribution(fill(p1t, 2)),
     product_distribution(p1t, p1t, p1t),
@@ -138,7 +137,10 @@ enzyme_failures = [
         )
         @test_throws Exception VectorBijectors.test_ad(
             d,
-            adtypes=DI.AutoEnzyme(; mode=set_runtime_activity(Reverse), function_annotation=Const),
+            adtypes=DI.AutoEnzyme(;
+                mode=set_runtime_activity(Reverse),
+                function_annotation=Const,
+            ),
             atol=1e-10,
             rtol=sqrt(eps()),
         )

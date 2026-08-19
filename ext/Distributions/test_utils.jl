@@ -3,7 +3,8 @@
 using LinearAlgebra: Cholesky, UpperTriangular, LowerTriangular
 using Test: @test
 
-VB._is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS <: D.Continuous
+VB._is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} =
+    VS <: D.Continuous
 
 VB._name(d::D.Distribution) = nameof(typeof(d))
 VB._name(d::D.Censored) = "censored $(VB._name(d.uncensored)) [$(d.lower),$(d.upper)]"
@@ -211,8 +212,6 @@ function VB.test_in_support(dist::D.Distribution, x)
         # We _could_ just check `all(in_support)`, but I don't want to be
         # caught off-guard by any bugs in the bijector's implementation that
         # returns a wrong shape/type of `x`.
-        error(
-            "Distributions.insupport returned unexpected type: $(typeof(in_support))",
-        )
+        error("Distributions.insupport returned unexpected type: $(typeof(in_support))")
     end
 end
