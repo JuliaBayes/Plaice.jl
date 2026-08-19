@@ -24,9 +24,12 @@ adtypes = [
 
 # Enzyme segfaults on 1.12 + Windows.
 # https://github.com/EnzymeAD/Enzyme.jl/issues/2986
-if VERSION >= v"1.12-" && Sys.iswindows()
-    filter!(a -> !(a isa DI.AutoEnzyme), adtypes)
-end
+#
+# TODO(penelopeysm): Trying to see if we can reenable this. May need to disable again if
+# there are other bugs
+# if VERSION >= v"1.12-" && Sys.iswindows()
+#     filter!(a -> !(a isa DI.AutoEnzyme), adtypes)
+# end
 
 # These are purposely chosen because the vec_length output is the same but
 # linked_vec_length differs.
@@ -42,9 +45,6 @@ products = [
     # Tuples
     product_distribution(Normal()),
     product_distribution(Normal(), Normal()),
-    product_distribution(Normal(), Beta(2, 2)),
-    product_distribution(Beta(2, 2), Exponential()),
-    product_distribution(m2, d2),
     # Vectors of univariate (Distributions.Product)
     product_distribution(fill(Normal(), 2)), # This is actually an MvNormal in disguise
     product_distribution(fill(Beta(2, 2), 2)),
@@ -61,7 +61,6 @@ products = [
     product_distribution((a=Normal(), b=Dirichlet(ones(2)))),
     product_distribution((a=Normal(), b=product_distribution(fill(Beta(2, 2), 2)))),
     # Nested
-    product_distribution(fill(p1t, 2, 2)),
     product_distribution(p2t, p2t, p2t),
     product_distribution(fill(p2t, 2)),
     product_distribution(fill(p2t, 2, 2)),
@@ -90,6 +89,16 @@ heterogeneous_products = [
 
 enzyme_failures = [
     # These work generally but fail with Enzyme -- should probably be reported upstream
+
+    # https://github.com/EnzymeAD/Enzyme.jl/issues/3465
+    product_distribution(Normal(), Beta(2, 2)),
+    # https://github.com/EnzymeAD/Enzyme.jl/issues/3465
+    product_distribution(Beta(2, 2), Exponential()),
+    # https://github.com/EnzymeAD/Enzyme.jl/issues/3465
+    product_distribution(m2, d2),
+    # https://github.com/EnzymeAD/Enzyme.jl/issues/3466
+    product_distribution(fill(p1t, 2, 2)),
+
     product_distribution(m2, d2, m2, d2),
     product_distribution(fill(p1t, 2)),
     product_distribution(p1t, p1t, p1t),
@@ -126,6 +135,12 @@ enzyme_failures = [
             adtypes=no_enzyme_adtypes,
             expected_zero_allocs=(),
             test_construction_type_stable=false,
+        )
+        @test_throws Exception VectorBijectors.test_ad(
+            d,
+            adtypes=DI.AutoEnzyme(; mode=set_runtime_activity(Reverse), function_annotation=Const),
+            atol=1e-10,
+            rtol=sqrt(eps()),
         )
     end
 end
