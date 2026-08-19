@@ -17,12 +17,14 @@ VarNames = "09a315b2-63fc-4165-8d7f-d59368e770cc"
 
 [weakdeps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
+ProbabilityMeasures = "d96443b0-2461-4412-bb6f-797ac5201ef9"
+Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 
 [extensions]
 VectorBijectorsDistributionsExt = ["Distributions", "LinearAlgebra", "Test", "VarNames"]
-
-[sources]
-VarNames = {rev = "main", url = "https://github.com/JuliaBayes/VarNames.jl"}
+VectorBijectorsProbabilityMeasuresExt = ["ProbabilityMeasures", "Test", "VarNames"]
+VectorBijectorsReactantExt = ["Enzyme", "Reactant", "Test"]
 
 [compat]
 ChangesOfVariables = "0.1"

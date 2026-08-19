@@ -20,7 +20,7 @@ struct Truncate{L<:Real,U<:Real} <: ScalarToScalarBijector
 end
 is_monotonically_increasing(t::Truncate) = !is_monotonically_decreasing(t)
 is_monotonically_decreasing(t::Truncate) = !isfinite(t.lower) && isfinite(t.upper)
-function (t::Truncate)(y::Real)
+function (t::Truncate)(y::Number)
     lbounded, ubounded = isfinite(t.lower), isfinite(t.upper)
     return if lbounded && ubounded
         ((t.upper - t.lower) * logistic(y)) + t.lower
@@ -32,7 +32,7 @@ function (t::Truncate)(y::Real)
         y
     end
 end
-function with_logabsdet_jacobian(t::Truncate, y::Real)
+function with_logabsdet_jacobian(t::Truncate, y::Number)
     lbounded, ubounded = isfinite(t.lower), isfinite(t.upper)
     return if lbounded && ubounded
         bma = t.upper - t.lower
@@ -71,7 +71,7 @@ struct Untruncate{L<:Real,U<:Real} <: ScalarToScalarBijector
 end
 is_monotonically_increasing(t::Untruncate) = !is_monotonically_decreasing(t)
 is_monotonically_decreasing(t::Untruncate) = !isfinite(t.lower) && isfinite(t.upper)
-function (u::Untruncate)(x::Real)
+function (u::Untruncate)(x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
     return if lbounded && ubounded
         logit((x - u.lower) / (u.upper - u.lower))
@@ -83,7 +83,7 @@ function (u::Untruncate)(x::Real)
         x
     end
 end
-function with_logabsdet_jacobian(u::Untruncate, x::Real)
+function with_logabsdet_jacobian(u::Untruncate, x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
     return if lbounded && ubounded
         bma = u.upper - u.lower

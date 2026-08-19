@@ -3,11 +3,12 @@
 using LinearAlgebra: Cholesky, UpperTriangular, LowerTriangular
 using Test: @test
 
-VB.is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} =
-    VS <: D.Continuous
+VB.is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS <: D.Continuous
 
 VB.test_name(d::D.Distribution) = nameof(typeof(d))
-VB.test_name(d::D.Censored) = "censored $(VB.test_name(d.uncensored)) [$(d.lower),$(d.upper)]"
+VB.test_name(
+    d::D.Censored,
+) = "censored $(VB.test_name(d.uncensored)) [$(d.lower),$(d.upper)]"
 function VB.test_name(d::D.Truncated)
     return "truncated $(VB.test_name(d.untruncated)) [$(d.lower),$(d.upper)]"
 end
