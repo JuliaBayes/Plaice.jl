@@ -12,7 +12,7 @@ function with_logabsdet_jacobian(::Vec, x::AbstractArray{T,N}) where {T<:Number,
     return vec(x), zero(T)
 end
 function with_logabsdet_jacobian(::Vec, x::AbstractArray)
-    return vec(x), 0.0
+    return vec(x), false
 end
 
 struct Reshape{N}
@@ -24,5 +24,5 @@ function with_logabsdet_jacobian(r::Reshape, x::AbstractArray{T,N}) where {T<:Nu
     return reshape(x, r.size), zero(T)
 end
 function with_logabsdet_jacobian(r::Reshape, x::AbstractArray)
-    return reshape(x, r.size), 0.0
+    return reshape(x, r.size), false
 end
