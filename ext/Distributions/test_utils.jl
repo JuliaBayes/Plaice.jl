@@ -3,30 +3,30 @@
 using LinearAlgebra: Cholesky, UpperTriangular, LowerTriangular
 using Test: @test
 
-VB._is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} =
+VB.is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} =
     VS <: D.Continuous
 
-VB._name(d::D.Distribution) = nameof(typeof(d))
-VB._name(d::D.Censored) = "censored $(VB._name(d.uncensored)) [$(d.lower),$(d.upper)]"
-function VB._name(d::D.Truncated)
-    return "truncated $(VB._name(d.untruncated)) [$(d.lower),$(d.upper)]"
+VB.test_name(d::D.Distribution) = nameof(typeof(d))
+VB.test_name(d::D.Censored) = "censored $(VB.test_name(d.uncensored)) [$(d.lower),$(d.upper)]"
+function VB.test_name(d::D.Truncated)
+    return "truncated $(VB.test_name(d.untruncated)) [$(d.lower),$(d.upper)]"
 end
-function VB._name(d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:D.Distribution})
-    return "reshaped $(VB._name(d.dist)) to size $(size(d))"
+function VB.test_name(d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:D.Distribution})
+    return "reshaped $(VB.test_name(d.dist)) to size $(size(d))"
 end
-VB._name(d::D.OrderStatistic) = "order statistic $(VB._name(d.dist))"
-function VB._name(d::D.JointOrderStatistics)
-    return "joint order statistic $(VB._name(d.dist)) with length $(length(d))"
+VB.test_name(d::D.OrderStatistic) = "order statistic $(VB.test_name(d.dist))"
+function VB.test_name(d::D.JointOrderStatistics)
+    return "joint order statistic $(VB.test_name(d.dist)) with length $(length(d))"
 end
-function VB._name(d::D.Product)
-    return "ProdDist($(join((VB._name(dist) for dist in d.v), ", ")))"
+function VB.test_name(d::D.Product)
+    return "ProdDist($(join((VB.test_name(dist) for dist in d.v), ", ")))"
 end
-function VB._name(d::Union{D.ProductDistribution,D.ProductNamedTupleDistribution})
-    return "ProdDist($(join((VB._name(dist) for dist in d.dists), ", ")))"
+function VB.test_name(d::Union{D.ProductDistribution,D.ProductNamedTupleDistribution})
+    return "ProdDist($(join((VB.test_name(dist) for dist in d.dists), ", ")))"
 end
 
-VB._rand_safe_ad(d::D.Distribution) = rand(d)
-VB._rand_safe_ad(d::D.Censored) = begin
+VB.rand_safe_ad(d::D.Distribution) = rand(d)
+VB.rand_safe_ad(d::D.Censored) = begin
     a, b = d.lower, d.upper
     while true
         x = rand(d)

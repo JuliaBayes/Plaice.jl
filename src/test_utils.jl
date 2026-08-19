@@ -17,15 +17,15 @@ const default_adtypes = [
 ]
 
 # Check if a distribution is continuous.
-function _is_continuous end
+function is_continuous end
 
 # Overload in order to pretty-print distributions. Otherwise things like MvNormal can get
 # super ugly.
-_name(d) = repr(d)
+test_name(d) = repr(d)
 
 # AD will give nonsense results at the limits of censored distributions (since the gradient
 # is not well-defined), so we avoid generating samples that are exactly at the limits.
-function _rand_safe_ad end
+function rand_safe_ad end
 
 # isapprox is not defined for some samples (specifically Cholesky and NTs), so we need to
 # patch that
@@ -70,11 +70,11 @@ function test_all(
     ad_rtol=sqrt(eps()),
     roundtrip_atol=1e-10,
     roundtrip_rtol=sqrt(eps()),
-    test_in_support=_is_continuous(d),
+    test_in_support=is_continuous(d),
     test_construction_type_stable=true,
 )
-    @info "Testing $(_name(d))"
-    @testset "$(_name(d))" begin
+    @info "Testing $(test_name(d))"
+    @testset "$(test_name(d))" begin
         test_roundtrip(d)
         test_roundtrip_inverse(d, test_in_support, roundtrip_atol, roundtrip_rtol)
         test_type_stability(d, test_construction_type_stable)
@@ -94,7 +94,7 @@ to_linked_vec. This test checks `x ≈ from_vec(d)(to_vec(d)(x))` for random sam
 function test_roundtrip(d)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
-    @testset "roundtrip: $(_name(d))" begin
+    @testset "roundtrip: $(test_name(d))" begin
         for _ in 1:1000
             @testset let x = rand(d), d = d
                 ffwd = to_vec(d)
@@ -103,7 +103,7 @@ function test_roundtrip(d)
             end
         end
     end
-    @testset "roundtrip (linked): $(_name(d))" begin
+    @testset "roundtrip (linked): $(test_name(d))" begin
         for _ in 1:1000
             @testset let x = rand(d), d = d
                 ffwd = to_linked_vec(d)
@@ -112,7 +112,7 @@ function test_roundtrip(d)
                 # https://github.com/TuringLang/Bijectors.jl/issues/441
                 if _is_joint_order_statistics(d) &&
                    (any(isnan, xnew) || !all(isfinite, xnew))
-                    @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
+                    @warn "NaNs or Inf produced in roundtrip test for $(test_name(d)), skipping isapprox test"
                 else
                     @test _isapprox_safe(x, xnew)
                 end
@@ -141,12 +141,12 @@ occasions where we disable this because of e.g. numerical issues, like for LKJ.
 function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
-    @testset "roundtrip inverse (linked): $(_name(d))" begin
+    @testset "roundtrip inverse (linked): $(test_name(d))" begin
         len = linked_vec_length(d)
         x = rand(d)
 
         if test_in_support_flag && !can_test_in_support(d, x)
-            @warn "Skipping test_in_support for $(_name(d)) because it is not implemented"
+            @warn "Skipping test_in_support for $(test_name(d)) because it is not implemented"
             test_in_support_flag = false
         end
 
@@ -166,7 +166,7 @@ function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
                     any(isnan, ynew) ||
                     !all(isfinite, ynew)
                 )
-                    @warn "NaNs or Inf produced in roundtrip test for $(_name(d)), skipping isapprox test"
+                    @warn "NaNs or Inf produced in roundtrip test for $(test_name(d)), skipping isapprox test"
                 else
                     @test _isapprox_safe(y, ynew; atol=atol, rtol=rtol)
                 end
@@ -186,7 +186,7 @@ set `test_construction_type_stable=false`.
 """
 function test_type_stability(d, test_construction_type_stable=true)
     x = rand(d)
-    @testset "type stability: $(_name(d))" begin
+    @testset "type stability: $(test_name(d))" begin
         @testset let x = x, d = d
             if test_construction_type_stable
                 @inferred to_vec(d)
@@ -199,7 +199,7 @@ function test_type_stability(d, test_construction_type_stable=true)
             @inferred frvs(y)
         end
     end
-    @testset "type stability (linked): $(_name(d))" begin
+    @testset "type stability (linked): $(test_name(d))" begin
         @testset let x = x, d = d
             if test_construction_type_stable
                 @inferred to_linked_vec(d)
@@ -219,7 +219,7 @@ Test that the optics produced by `optic_vec` for the given distribution `d` line
 values produced by `to_vec`.
 """
 function test_optics(d)
-    @testset "optic_vec: $(_name(d))" begin
+    @testset "optic_vec: $(test_name(d))" begin
         o = optic_vec(d)
         x = rand(d)
         v = to_vec(d)(x)
@@ -230,7 +230,7 @@ function test_optics(d)
         end
     end
 
-    @testset "linked_optic_vec: $(_name(d))" begin
+    @testset "linked_optic_vec: $(test_name(d))" begin
         # This is a lot harder to test. What we need to prove is that
         #       x = rand(d)
         #       lv = to_linked_vec(d)(x)
@@ -273,7 +273,7 @@ vector forms for the given distribution `d` match those reported by `vec_length`
 `linked_vec_length`.
 """
 function test_vec_lengths(d)
-    @testset "vector lengths: $(_name(d))" begin
+    @testset "vector lengths: $(test_name(d))" begin
         for _ in 1:10
             @testset let x = rand(d), d = d
                 y = to_vec(d)(x)
@@ -281,7 +281,7 @@ function test_vec_lengths(d)
             end
         end
     end
-    @testset "vector lengths (linked): $(_name(d))" begin
+    @testset "vector lengths (linked): $(test_name(d))" begin
         for _ in 1:10
             @testset let x = rand(d), d = d
                 y = to_linked_vec(d)(x)
@@ -305,7 +305,7 @@ function test_allocations(d, expected_zero_allocs=())
     # to create a new vector.
     # TODO: Generalise to multivariates etc
     x = rand(d)
-    @testset "allocations: $(_name(d))" begin
+    @testset "allocations: $(test_name(d))" begin
         @testset let x = x, d = d
             if to_vec in expected_zero_allocs
                 ffwd = to_vec(d)
@@ -320,7 +320,7 @@ function test_allocations(d, expected_zero_allocs=())
             end
         end
     end
-    @testset "allocations (linked): $(_name(d))" begin
+    @testset "allocations (linked): $(test_name(d))" begin
         @testset let x = x, d = d
             if to_linked_vec in expected_zero_allocs
                 ffwd = to_linked_vec(d)
@@ -343,7 +343,7 @@ against AD-calculated log-Jacobians for the given distribution `d`.
 """
 function test_logjac(d, atol, rtol)
     # Vectorisation logjacs should be zero because they are just reshapes.
-    @testset "logjac: $(_name(d))" begin
+    @testset "logjac: $(test_name(d))" begin
         for _ in 1:100
             @testset let x = rand(d), d = d
                 ffwd = to_vec(d)
@@ -361,9 +361,9 @@ function test_logjac(d, atol, rtol)
     # Link logjacs will not be zero, so we need to check against a chosen backend. Because
     # Jacobians need to map from vector to vector, here we test the transformation of the
     # vectorised form to the linked vectorised form via the original sample.
-    @testset "logjac (linked): $(_name(d))" begin
+    @testset "logjac (linked): $(test_name(d))" begin
         for _ in 1:100
-            x = _rand_safe_ad(d)
+            x = rand_safe_ad(d)
 
             @testset let x = x, d = d
                 # As a sanity check we should make sure that to_vec_for_logjac_test and
@@ -418,7 +418,7 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
     #
     # Arguably, the other AD backends probably should also refuse to differentiate it, but
     # they do actually return the right 'gradients' so we can test them.
-    adtypes = if !_is_continuous(d)
+    adtypes = if !is_continuous(d)
         filter(adtypes) do adtype
             !(
                 adtype isa DI.AutoMooncake ||
@@ -430,8 +430,8 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
         adtypes
     end
 
-    @testset "AD forward: $(_name(d))" begin
-        x = _rand_safe_ad(d)
+    @testset "AD forward: $(test_name(d))" begin
+        x = rand_safe_ad(d)
         xvec = to_vec(d)(x)
         ffwd = to_linked_vec(d) ∘ from_vec(d)
         ref_jac = DI.jacobian(ffwd, ref_adtype, xvec)
@@ -451,8 +451,8 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
         end
     end
 
-    @testset "AD reverse: $(_name(d))" begin
-        x = _rand_safe_ad(d)
+    @testset "AD reverse: $(test_name(d))" begin
+        x = rand_safe_ad(d)
         yvec = to_linked_vec(d)(x)
         frvs = to_vec(d) ∘ from_linked_vec(d)
         ref_jac = DI.jacobian(frvs, ref_adtype, yvec)
