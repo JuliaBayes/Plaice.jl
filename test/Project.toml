@@ -15,3 +15,13 @@ VectorBijectors = "55802ec2-189d-45e6-a786-b4d97e4775f1"
 
 [sources]
 VarNames = {rev = "main", url = "https://github.com/JuliaBayes/VarNames.jl"}
+
+[compat]
+DifferentiationInterface = "0.7.21"
+Distributions = "0.25.130"
+Enzyme = "0.13.199"
+FillArrays = "1.17.0"
+ForwardDiff = "1.4.5"
+Mooncake = "0.5.45"
+PDMats = "0.11.41"
+ReverseDiff = "1.17.0"
