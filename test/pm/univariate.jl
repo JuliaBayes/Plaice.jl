@@ -7,7 +7,12 @@ using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
 using Mooncake: Mooncake
-using Reactant: Reactant
+
+if !Sys.iswindows()
+    import Pkg
+    Pkg.add("Reactant")
+    using Reactant: Reactant
+end
 
 const PM = ProbabilityMeasures
 
