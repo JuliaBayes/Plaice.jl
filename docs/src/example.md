@@ -41,10 +41,7 @@ This means that the log-absolute determinant of the Jacobian is always `0`.
 We can now implement `with_logabsdet_jacobian`.
 
 ```@example cyclic
-function Plaice.with_logabsdet_jacobian(
-    b::CircShift,
-    x::AbstractVector{T},
-) where {T<:Real}
+function Plaice.with_logabsdet_jacobian(b::CircShift, x::AbstractVector{T}) where {T<:Real}
     y = circshift(x, b.shift)
     return y, zero(T)
 end
