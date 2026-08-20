@@ -103,9 +103,9 @@ function _simplex_bijector!(y, x::AbstractVector, ::SimplexBijector)
     T = eltype(x)
     ϵ = _eps(T)
     sum_tmp = zero(T)
-    @inbounds z = x[1] * (one(T) - 2ϵ) + ϵ # z ∈ [ϵ, 1-ϵ]
-    @inbounds y[1] = LogExpFunctions.logit(z) + log(T(K - 1))
-    @inbounds @simd for k in 2:(K-1)
+    z = x[1] * (one(T) - 2ϵ) + ϵ # z ∈ [ϵ, 1-ϵ]
+    y[1] = LogExpFunctions.logit(z) + log(T(K - 1))
+    for k in 2:(K-1)
         sum_tmp += x[k-1]
         # z ∈ [ϵ, 1-ϵ]
         # x[k] = 0 && sum_tmp = 1 -> z ≈ 1
@@ -121,7 +121,7 @@ function _simplex_bijector!(Y, X::AbstractMatrix, ::SimplexBijector)
     @assert K > 1 "x needs to be of length greater than 1"
     T = eltype(X)
     ϵ = _eps(T)
-    @inbounds @simd for n in 1:size(X, 2)
+    for n in 1:size(X, 2)
         sum_tmp = zero(T)
         z = X[1, n] * (one(T) - 2ϵ) + ϵ
         Y[1, n] = LogExpFunctions.logit(z) + log(T(K - 1))
@@ -148,15 +148,15 @@ function _simplex_inv_bijector!(x, y::AbstractVector)
     @assert K > 1 "x needs to be of length greater than 1"
     T = eltype(y)
     ϵ = _eps(T)
-    @inbounds z = LogExpFunctions.logistic(y[1] - log(T(K - 1)))
-    @inbounds x[1] = _clamp((z - ϵ) / (one(T) - 2ϵ), 0, 1)
+    z = LogExpFunctions.logistic(y[1] - log(T(K - 1)))
+    x[1] = _clamp((z - ϵ) / (one(T) - 2ϵ), 0, 1)
     sum_tmp = zero(T)
-    @inbounds @simd for k in 2:(K-1)
+    for k in 2:(K-1)
         z = LogExpFunctions.logistic(y[k] - log(T(K - k)))
         sum_tmp += x[k-1]
         x[k] = _clamp(((one(T) + ϵ) - sum_tmp) / (one(T) - 2ϵ) * z - ϵ, 0, 1)
     end
-    @inbounds sum_tmp += x[K-1]
+    sum_tmp += x[K-1]
     x[K] = _clamp(one(T) - sum_tmp, 0, 1)
     return x
 end
@@ -166,7 +166,7 @@ function _simplex_inv_bijector!(X, Y::AbstractMatrix)
     @assert K > 1 "x needs to be of length greater than 1"
     T = eltype(Y)
     ϵ = _eps(T)
-    @inbounds @simd for n in 1:size(X, 2)
+    for n in 1:size(X, 2)
         sum_tmp, z = zero(T), LogExpFunctions.logistic(Y[1, n] - log(T(K - 1)))
         X[1, n] = _clamp((z - ϵ) / (one(T) - 2ϵ), 0, 1)
         for k in 2:(K-1)
@@ -188,9 +188,9 @@ function _logabsdetjac_simplex(b::SimplexBijector, x::AbstractVector{T}) where {
     K = length(x)
 
     sum_tmp = zero(eltype(x))
-    @inbounds z = x[1]
+    z = x[1]
     lp += log(max(z, ϵ)) + log(max(one(T) - z, ϵ))
-    @inbounds @simd for k in 2:(K-1)
+    for k in 2:(K-1)
         sum_tmp += x[k-1]
         z = x[k] / max(one(T) - sum_tmp, ϵ)
         lp += log(max(z, ϵ)) + log(max(one(T) - z, ϵ)) + log(max(one(T) - sum_tmp, ϵ))
@@ -244,7 +244,7 @@ function _link_chol_lkj(W::AbstractMatrix)
     y = similar(W) # W is upper triangular.
     # Some zero filling can be avoided. Though diagnoal is still needed to be filled with zero.
 
-    @inbounds for j in 1:K
+    for j in 1:K
         remainder_sq = W[j, j]^2
         for i in (j-1):-1:1
             z = W[i, j] / sqrt(remainder_sq)
@@ -266,7 +266,7 @@ function _link_chol_lkj_from_upper(W::AbstractMatrix)
     y = similar(W, N)
 
     starting_idx = 1
-    @inbounds for j in 2:K
+    for j in 2:K
         y[starting_idx] = atanh(W[1, j])
         starting_idx += 1
         remainder_sq = W[j, j]^2
@@ -297,7 +297,7 @@ function _inv_link_chol_lkj(Y::AbstractMatrix)
     T = float(eltype(W))
     logJ = zero(T)
 
-    @inbounds for j in 1:K
+    for j in 1:K
         log_remainder = zero(T)  # log of proportion of unit vector remaining
         for i in 1:(j-1)
             z = tanh(Y[i, j])
@@ -327,7 +327,7 @@ function _inv_link_chol_lkj(y::AbstractVector)
     lc_vec = map(LogExpFunctions.logcosh, y)
 
     idx = 1
-    @inbounds for j in 1:K
+    for j in 1:K
         log_remainder = zero(T)  # log of proportion of unit vector remaining
         for i in 1:(j-1)
             z = z_vec[idx]
@@ -350,7 +350,7 @@ function _logabsdetjac_inv_corr(Y::AbstractMatrix)
     K = LinearAlgebra.checksquare(Y)
 
     result = float(zero(eltype(Y)))
-    @inbounds for j in 2:K, i in 1:(j-1)
+    for j in 2:K, i in 1:(j-1)
         result -= (K - i + 1) * LogExpFunctions.logcosh(Y[i, j])
     end
     return result
@@ -372,7 +372,7 @@ function _logabsdetjac_inv_chol(y::AbstractVector)
 
     result = float(zero(eltype(y)))
     idx = 1
-    @inbounds for j in 2:K
+    for j in 2:K
         tmp = zero(result)
         for _ in 1:(j-1)
             logcoshy = LogExpFunctions.logcosh(y[idx])
