@@ -24,7 +24,7 @@ flowchart TD
     style C fill:#9558B2,stroke:#693D7D,color:#ffffff
 ```
 
-It assumes that there are three forms of samples from a distribution `d` that we are interested in:
+It assumes that there are three forms of samples from a distribution `dist` that we are interested in:
 
  1. **(A) the sample in original space**, which is what `rand(d)` returns.
 
@@ -82,4 +82,4 @@ Notice that the unconstrained vector `C` has one fewer element than the vectoris
 
 A plaice is a flatfish, and Plaice's role is to flatten samples.
 
-It's also a deeper dependency for probabilistic programming, and is very much out of the limelight, much like how plaice live on the sea floor.
+It's also a deeper, low-level dependency for probabilistic programming, and is very much out of the limelight, much like how plaice live on the sea floor.
