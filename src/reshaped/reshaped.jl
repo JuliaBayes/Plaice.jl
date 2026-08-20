@@ -6,7 +6,7 @@
 # When reshaping univariate distributions, `original_size` get stored as `()`. If we naively
 # use `reshape` we will get a 0-dimensional array out, which is not the same as the scalar
 # that `rand(dist)` returns. So we need to use this helper function.
-_reshape_or_only(x::AbstractArray, ::Tuple{}) = x[]
+_reshape_or_only(x::AbstractArray, ::Tuple{}) = sum(x)
 _reshape_or_only(x, ::Tuple{}) = x
 _reshape_or_only(x::AbstractArray, sz) = reshape(x, sz)
 # This method handles the case where we need to 'reshape' a scalar into an array

@@ -7,9 +7,10 @@ vectors of length one to scalars.
 struct OnlyWrap{B<:ScalarToScalarBijector}
     bijector::B
 end
-(w::OnlyWrap)(x) = w.bijector(x[])
+# Use sum(x) instead of x[] to avoid scalar indexing.
+(w::OnlyWrap)(x) = w.bijector(sum(x))
 function with_logabsdet_jacobian(w::OnlyWrap, x::AbstractVector)
-    return with_logabsdet_jacobian(w.bijector, x[])
+    return with_logabsdet_jacobian(w.bijector, sum(x))
 end
 inverse(w::OnlyWrap) = VectWrap(inverse(w.bijector))
 
