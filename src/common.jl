@@ -3,9 +3,8 @@
 
 An abstract type for bijectors that map scalars to scalars.
 
-Any subtype of this must implement `is_monotonically_increasing`
-and `is_monotonically_decreasing`. One of them should be true and
-one should be false.
+Any subtype of this must implement `is_monotonically_increasing` and
+`is_monotonically_decreasing`. One of them should be true and one should be false.
 """
 abstract type ScalarToScalarBijector end
 
@@ -22,7 +21,9 @@ implementation of `to_vec` and `from_vec` for `MvNormal` distributions.
 The problem with using `identity` as a bijector is that ChangesOfVariables.jl defines
 `with_logabsdet_jacobian(identity, x) = (x, zero(eltype(x)))`, which can fail if `eltype(x)`
 is not a number type! Implementing this allows us to shortcircuit that definition and return
-a sensible result (i.e. a Float64) even if `x` is not a numeric vector.
+a sensible result (i.e. a Bool) even if `x` is not a numeric vector. Note that we
+intentionally do not return `0.0::Float64` in such cases as that can cause unwanted
+promotion.
 """
 struct TypedIdentity <: ScalarToScalarBijector end
 is_monotonically_increasing(::TypedIdentity) = true
@@ -32,5 +33,5 @@ function with_logabsdet_jacobian(::TypedIdentity, x::AbstractArray{T}) where {T<
     return (x, zero(T))
 end
 with_logabsdet_jacobian(::TypedIdentity, x::T) where {T<:Number} = (x, zero(T))
-with_logabsdet_jacobian(::TypedIdentity, x) = (x, zero(Float64))
+with_logabsdet_jacobian(::TypedIdentity, x) = (x, false)
 inverse(x::TypedIdentity) = x

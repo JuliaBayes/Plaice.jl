@@ -1,27 +1,16 @@
-# Types and helper functions originally from Bijectors.jl, copied here to remove the
-# dependency on Bijectors.jl.
-
 using LinearAlgebra: LinearAlgebra
 using LogExpFunctions: LogExpFunctions
 
 # ---- Helpers ----
 
 _eps(::Type{T}) where {T} = T(eps(T))
-_eps(::Type{Real}) = eps(Float64)
-_eps(::Type{<:Integer}) = eps(Float64)
+_eps(::Type{<:Number}) = eps(Float64)
 
 function _clamp(x, a, b)
     T = promote_type(typeof(x), typeof(a), typeof(b))
     clamped_x = ifelse(x < a, convert(T, a), ifelse(x > b, convert(T, b), x))
     return clamped_x
 end
-
-# ---- Inverse wrapper ----
-
-struct Inverse{T}
-    orig::T
-end
-inverse(ib::Inverse) = ib.orig
 
 # ---- is_monotonically_increasing / is_monotonically_decreasing ----
 
@@ -83,17 +72,20 @@ end
 struct SimplexBijector end
 
 (b::SimplexBijector)(x) = _simplex_bijector(x, b)
-inverse(::SimplexBijector) = Inverse(SimplexBijector())
+inverse(::SimplexBijector) = InverseSimplexBijector()
 
 function with_logabsdet_jacobian(b::SimplexBijector, x)
     return _simplex_bijector(x, b), _logabsdetjac_simplex(b, x)
 end
 
-(ib::Inverse{SimplexBijector})(y) = _simplex_inv_bijector(y, ib.orig)
+struct InverseSimplexBijector end
+inverse(::InverseSimplexBijector) = SimplexBijector()
 
-function with_logabsdet_jacobian(ib::Inverse{SimplexBijector}, y)
-    x = _simplex_inv_bijector(y, ib.orig)
-    return x, -_logabsdetjac_simplex(ib.orig, x)
+(::InverseSimplexBijector)(y) = _simplex_inv_bijector(y)
+
+function with_logabsdet_jacobian(::InverseSimplexBijector, y)
+    x = _simplex_inv_bijector(y)
+    return x, -_logabsdetjac_simplex(SimplexBijector(), x)
 end
 
 function _simplex_bijector(x::AbstractArray, b::SimplexBijector)
@@ -143,16 +135,15 @@ function _simplex_bijector!(Y, X::AbstractMatrix, ::SimplexBijector)
     return Y
 end
 
-# Inverse.
-function _simplex_inv_bijector(y, b)
+function _simplex_inv_bijector(y)
     sz = size(y)
     K = sz[1] + 1
     x = similar(y, Base.setindex(sz, K, 1))
-    _simplex_inv_bijector!(x, y, b)
+    _simplex_inv_bijector!(x, y)
     return x
 end
 
-function _simplex_inv_bijector!(x, y::AbstractVector, b::SimplexBijector)
+function _simplex_inv_bijector!(x, y::AbstractVector)
     K = length(y) + 1
     @assert K > 1 "x needs to be of length greater than 1"
     T = eltype(y)
@@ -170,7 +161,7 @@ function _simplex_inv_bijector!(x, y::AbstractVector, b::SimplexBijector)
     return x
 end
 
-function _simplex_inv_bijector!(X, Y::AbstractMatrix, b::SimplexBijector)
+function _simplex_inv_bijector!(X, Y::AbstractMatrix)
     K, N = size(Y, 1) + 1, size(Y, 2)
     @assert K > 1 "x needs to be of length greater than 1"
     T = eltype(Y)
@@ -209,7 +200,7 @@ function _logabsdetjac_simplex(b::SimplexBijector, x::AbstractVector{T}) where {
 end
 
 # Needed to avoid falling back to `with_logabsdet_jacobian` for matrix inputs.
-function _logabsdetjac_simplex(b::SimplexBijector, x::AbstractMatrix{<:Real})
+function _logabsdetjac_simplex(b::SimplexBijector, x::AbstractMatrix{<:Number})
     return sum(Base.Fix1(_logabsdetjac_simplex, b), eachcol(x))
 end
 
@@ -407,16 +398,19 @@ https://mc-stan.org/docs/reference-manual/correlation-matrix-transform.html
 struct VecCorrBijector end
 
 (b::VecCorrBijector)(X) = _link_chol_lkj_from_upper(cholesky_upper(X))
-inverse(::VecCorrBijector) = Inverse(VecCorrBijector())
+inverse(::VecCorrBijector) = InverseVecCorrBijector()
 
 function with_logabsdet_jacobian(b::VecCorrBijector, x)
     y = b(x)
     return y, -_logabsdetjac_inv_corr(y)
 end
 
-(ib::Inverse{VecCorrBijector})(y) = first(with_logabsdet_jacobian(ib, y))
+struct InverseVecCorrBijector end
+inverse(::InverseVecCorrBijector) = VecCorrBijector()
 
-function with_logabsdet_jacobian(::Inverse{VecCorrBijector}, y)
+(::InverseVecCorrBijector)(y) = first(with_logabsdet_jacobian(InverseVecCorrBijector(), y))
+
+function with_logabsdet_jacobian(::InverseVecCorrBijector, y)
     U_logJ = _inv_link_chol_lkj(y)
     # workaround for tuples that don't support iteration in certain AD backends
     U, logJ = U_logJ[1], U_logJ[2]
@@ -466,18 +460,23 @@ function (b::VecCholeskyBijector)(X)
     end
 end
 
-inverse(b::VecCholeskyBijector) = Inverse(b)
+inverse(b::VecCholeskyBijector) = InverseVecCholeskyBijector(b.mode)
 
 function with_logabsdet_jacobian(b::VecCholeskyBijector, x)
     y = b(x)
     return y, -_logabsdetjac_inv_chol(y)
 end
 
-(ib::Inverse{VecCholeskyBijector})(y) = first(with_logabsdet_jacobian(ib, y))
+struct InverseVecCholeskyBijector
+    mode::Symbol
+end
+inverse(b::InverseVecCholeskyBijector) = VecCholeskyBijector(b.mode)
 
-function with_logabsdet_jacobian(b::Inverse{VecCholeskyBijector}, y)
+(b::InverseVecCholeskyBijector)(y) = first(with_logabsdet_jacobian(b, y))
+
+function with_logabsdet_jacobian(b::InverseVecCholeskyBijector, y)
     factors, logJ = _inv_link_chol_lkj(y)
-    if b.orig.mode === :U
+    if b.mode === :U
         # This Cholesky constructor is compatible with Julia v1.6
         # for later versions Cholesky(::UpperTriangular) works
         return LinearAlgebra.Cholesky(factors, 'U', 0), logJ

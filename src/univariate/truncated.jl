@@ -14,7 +14,7 @@ using LogExpFunctions: logit, logistic, log1pexp
 Callable struct, defined such that `(::Truncate(a, b))(x)` converts `x` from `(-Inf, Inf)`
 to `(a, b)`.
 """
-struct Truncate{L<:Real,U<:Real} <: ScalarToScalarBijector
+struct Truncate{L<:Number,U<:Number} <: ScalarToScalarBijector
     lower::L
     upper::U
 end
@@ -65,7 +65,7 @@ This is the appropriate scalar-to-scalar bijector for distributions which have s
 !!! warning
     This does not check whether the input is a scalar in `(a, b)`.
 """
-struct Untruncate{L<:Real,U<:Real} <: ScalarToScalarBijector
+struct Untruncate{L<:Number,U<:Number} <: ScalarToScalarBijector
     lower::L
     upper::U
 end

@@ -4,7 +4,7 @@
 Callable struct, defined such that `(e::Exp)(y) = ((e.sign * exp(y)) + e.bound)`. The sign
 is determined by the `sign` field.
 """
-struct Exp{L<:Real} <: ScalarToScalarBijector
+struct Exp{L<:Number} <: ScalarToScalarBijector
     bound::L
     sign::Int
 end
@@ -29,7 +29,7 @@ support of `[l.bound, ∞)` (if `l.sign == 1`), or `(-∞, l.bound]` (if `l.sign
 !!! warning
     This does not check whether the input is the domain of the transformation.
 """
-struct Log{L<:Real} <: ScalarToScalarBijector
+struct Log{L<:Number} <: ScalarToScalarBijector
     bound::L
     sign::Int
 end

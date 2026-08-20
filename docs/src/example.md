@@ -41,7 +41,7 @@ This means that the log-absolute determinant of the Jacobian is always `0`.
 We can now implement `with_logabsdet_jacobian`.
 
 ```@example cyclic
-function Plaice.with_logabsdet_jacobian(b::CircShift, x::AbstractVector{T}) where {T<:Real}
+function Plaice.with_logabsdet_jacobian(b::CircShift, x::AbstractVector{T}) where {T<:Number}
     y = circshift(x, b.shift)
     return y, zero(T)
 end
@@ -50,6 +50,9 @@ end
 !!! note
 
     `with_logabsdet_jacobian` actually belongs to the ChangesOfVariables.jl package, but Plaice.jl re-exports it so that you don't need to import it separately if Plaice is already a dependency.
+
+First of all, let's point out that we use `Number` as the type bound here instead of `Real`, which might be seen as more conventional.
+This is mainly for compatibility with [Reactant.jl](https://github.com/EnzymeAD/Reactant.jl): Reactant's traced number types subtype `Number` but not `Real`.
 
 It is good practice to let the type of the input determine the type of the log-Jacobian term here.
 However, you might also ask: since a cyclic permutation is also well-defined for arrays of non-real types, should we also allow that?
@@ -69,7 +72,7 @@ end
 In particular, we expect that `(c::CircShift)(x)` should perform the forward transformation.
 
 ```@example cyclic
-function (b::CircShift)(x::AbstractVector{T}) where {T<:Real}
+function (b::CircShift)(x::AbstractVector{T}) where {T<:Number}
     return circshift(x, b.shift)
 end
 ```
@@ -110,7 +113,7 @@ We can implement this first:
 using Plaice
 
 struct StereographicProj end
-function (s::StereographicProj)(x::AbstractVector{T}) where {T<:Real}
+function (s::StereographicProj)(x::AbstractVector{T}) where {T<:Number}
     y = similar(x, 2)
     denom = one(T) - x[3]
     y[1] = x[1] / denom
@@ -189,7 +192,7 @@ $$|\det(J)| = \frac{1}{|x_3| (1 - x_3)^2},$$
 function Plaice.with_logabsdet_jacobian(
     b::StereographicProj,
     x::AbstractVector{T},
-) where {T<:Real}
+) where {T<:Number}
     logjac = -log(abs(x[3])) - (2 * log(one(T) - x[3]))
     return b(x), logjac
 end
@@ -239,7 +242,7 @@ So we could also write:
 function Plaice.with_logabsdet_jacobian(
     s::StereographicProj,
     x::AbstractVector{T},
-) where {T<:Real}
+) where {T<:Number}
     denom = one(T) - x[3]  # Shared computation
     y = similar(x, 2)
     y[1] = x[1] / denom

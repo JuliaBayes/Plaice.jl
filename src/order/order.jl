@@ -6,7 +6,7 @@ struct JointOrderWrap{B<:ScalarToScalarBijector}
     bijector::B
 end
 (w::JointOrderWrap)(x::AbstractVector) = first(with_logabsdet_jacobian(w, x))
-function with_logabsdet_jacobian(m::JointOrderWrap, x::AbstractVector{T}) where {T<:Real}
+function with_logabsdet_jacobian(m::JointOrderWrap, x::AbstractVector{T}) where {T<:Number}
     # `x` is always an ordered vector. Sometimes, mapping m.bijector over x doesn't give
     # an ordered vector: it could give a *reverse* ordered vector, if m.bijector performs
     # a sign flip (i.e., is monotonically decreasing). In that case, we need to undo the
@@ -43,7 +43,7 @@ end
 function with_logabsdet_jacobian(
     m::InverseJointOrderWrap,
     y::AbstractVector{T},
-) where {T<:Real}
+) where {T<:Number}
     # First, we need to undo the logarithmic transformations to get back to the ordered
     # vector.
     logjac = zero(T)

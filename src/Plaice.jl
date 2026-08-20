@@ -17,6 +17,8 @@ export unconstrained_optic_vec
 # utils
 export has_constant_vec_bijector
 export scalar_to_scalar_bijector
+export is_monotonically_increasing
+export is_monotonically_decreasing
 export TypedIdentity, Log, Untruncate
 # re-exports
 export with_logabsdet_jacobian
