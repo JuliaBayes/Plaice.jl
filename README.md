@@ -26,3 +26,9 @@ On top of defining a clearer interface than Bijectors.jl (from which much code i
 Much of this is in fact contingent on the underlying distributions.
 To this end, Plaice is also intentionally decoupled from Distributions.jl: the pre-existing functionality for Distributions.jl is provided in an extension.
 This allows other distribution providers to use the functionality in this library as well.
+
+## Why Plaice?
+
+A plaice is a flatfish, and Plaice's role is to flatten samples.
+
+It's also a deeper dependency for probabilistic programming, and is very much out of the limelight, much like how plaice live on the sea floor.
