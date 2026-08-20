@@ -4,6 +4,8 @@ using LogExpFunctions: LogExpFunctions
 # ---- Helpers ----
 
 _eps(::Type{T}) where {T<:Number} = T(eps(T))
+_eps(::Type{Real}) = eps(Float64)
+_eps(::Type{T}) where {T<:Integer} = eps(Float64)
 
 function _clamp(x, a, b)
     T = promote_type(typeof(x), typeof(a), typeof(b))
