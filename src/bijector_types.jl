@@ -3,8 +3,7 @@ using LogExpFunctions: LogExpFunctions
 
 # ---- Helpers ----
 
-_eps(::Type{T}) where {T} = T(eps(T))
-_eps(::Type{<:Number}) = eps(Float64)
+_eps(::Type{T}) where {T<:Number} = T(eps(T))
 
 function _clamp(x, a, b)
     T = promote_type(typeof(x), typeof(a), typeof(b))
