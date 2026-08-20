@@ -51,7 +51,7 @@ This allows other distribution providers to use the functionality in this librar
 ## Quick example
 
 ```julia
-julia> using Plaice, Distributions
+julia> using Plaice, Distributions, Random
 
 julia> dist = product_distribution((a=Normal(), b=Dirichlet(ones(3))))
 ProductNamedTupleDistribution{(:a, :b)}(
@@ -59,23 +59,24 @@ a: Normal{Float64}(μ=0.0, σ=1.0)
 b: Dirichlet{Float64, Vector{Float64}, Float64}(alpha=[1.0, 1.0, 1.0])
 )
 
-julia> A = rand(dist)
-(a = -1.6804996240649275, b = [0.2758787234375264, 0.6614907087916384, 0.06263056777083534])
+julia> A = rand(Xoshiro(468), dist)
+(a = 0.07200886749732076, b = [0.033419281366442295, 0.3899368701556886, 0.576643848477869])
 
-julia> f = to_vec(dist);
-       B = f(A)
+julia> f = to_vec(dist); B = f(A)
 4-element Vector{Float64}:
- -1.6804996240649275
-  0.2758787234375264
-  0.6614907087916384
-  0.06263056777083534
+ 0.07200886749732076
+ 0.033419281366442295
+ 0.3899368701556886
+ 0.576643848477869
 
-julia> g = to_unconstrained_vec(dist);
-       C = g(A)
+julia> g = to_unconstrained_vec(dist); C = g(A)
 3-element Vector{Float64}:
- -1.6804996240649275
- -0.2718503455476954
-  2.3572424758165047
+  0.07200886749732076
+ -2.6714846111978523
+ -0.3912399743018815
+
+julia> with_logabsdet_jacobian(g, A)
+([0.07200886749732076, -2.6714846111978523, -0.3912399743018815], 4.890923133556285)
 ```
 
 Notice that the unconstrained vector `C` has one fewer element than the vectorised form `B`, because the Dirichlet distribution is constrained to the simplex (i.e. its elements must sum to 1), and thus one of its elements is redundant.
