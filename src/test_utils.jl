@@ -264,7 +264,9 @@ function test_optics(d)
                 # `optic_vec(d)[j] === unconstrained_optic`.
                 nonzero_index = findfirst(j -> o[j] == unconstrained_optic, 1:length(xvec))
                 if nonzero_index === nothing
-                    error("unconstrained_optic_vec produced an optic not found in optic_vec")
+                    error(
+                        "unconstrained_optic_vec produced an optic not found in optic_vec",
+                    )
                 end
                 for j in 1:length(xvec)
                     if j != nonzero_index

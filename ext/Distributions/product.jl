@@ -82,7 +82,8 @@ for (product_type, dist_field) in (
         end
 
         VB.vec_length(d::$product_type) = sum(VB.vec_length, d.$dist_field)
-        VB.unconstrained_vec_length(d::$product_type) = sum(VB.unconstrained_vec_length, d.$dist_field)
+        VB.unconstrained_vec_length(d::$product_type) =
+            sum(VB.unconstrained_vec_length, d.$dist_field)
     end
 end
 

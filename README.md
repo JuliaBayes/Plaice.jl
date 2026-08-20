@@ -53,7 +53,7 @@ This allows other distribution providers to use the functionality in this librar
 ```julia
 julia> using Plaice, Distributions
 
-julia> dist = product_distribution((a = Normal(), b = Dirichlet(ones(3))))
+julia> dist = product_distribution((a=Normal(), b=Dirichlet(ones(3))))
 ProductNamedTupleDistribution{(:a, :b)}(
 a: Normal{Float64}(μ=0.0, σ=1.0)
 b: Dirichlet{Float64, Vector{Float64}, Float64}(alpha=[1.0, 1.0, 1.0])
@@ -62,14 +62,16 @@ b: Dirichlet{Float64, Vector{Float64}, Float64}(alpha=[1.0, 1.0, 1.0])
 julia> A = rand(dist)
 (a = -1.6804996240649275, b = [0.2758787234375264, 0.6614907087916384, 0.06263056777083534])
 
-julia> f = to_vec(dist); B = f(A)
+julia> f = to_vec(dist);
+       B = f(A)
 4-element Vector{Float64}:
  -1.6804996240649275
   0.2758787234375264
   0.6614907087916384
   0.06263056777083534
 
-julia> g = to_unconstrained_vec(dist); C = g(A)
+julia> g = to_unconstrained_vec(dist);
+       C = g(A)
 3-element Vector{Float64}:
  -1.6804996240649275
  -0.2718503455476954

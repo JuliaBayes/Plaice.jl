@@ -31,7 +31,8 @@ function VB.unconstrained_vec_length(d::PDMatrixDistribution)
     n = first(size(d))
     return div(n * (n + 1), 2)
 end
-VB.unconstrained_optic_vec(d::PDMatrixDistribution) = fill(nothing, VB.unconstrained_vec_length(d))
+VB.unconstrained_optic_vec(d::PDMatrixDistribution) =
+    fill(nothing, VB.unconstrained_vec_length(d))
 
 # LKJ correlation matrices.
 #
