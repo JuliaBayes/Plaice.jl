@@ -1,9 +1,9 @@
-module VectorBijectorsTests
+module PlaiceTests
 
-using VectorBijectors
+using Plaice
 using Test
 
-@testset "VectorBijectors.jl" begin
+@testset "Plaice.jl" begin
     # include("distributions/univariate.jl")
     # include("distributions/multivariate.jl")
     # include("distributions/matrix.jl")
@@ -15,4 +15,4 @@ using Test
     include("pm/univariate.jl")
 end
 
-end # module VectorBijectorsTests
+end # module PlaiceTests

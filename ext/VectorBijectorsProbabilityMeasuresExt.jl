@@ -1,13 +1,13 @@
-module VectorBijectorsProbabilityMeasuresExt
+module PlaiceProbabilityMeasuresExt
 
-using VectorBijectors
+using Plaice
 using ProbabilityMeasures
 using VarNames
 
-const VB = VectorBijectors
+const VB = Plaice
 const PM = ProbabilityMeasures
 
 include("ProbabilityMeasures/univariates.jl")
 include("ProbabilityMeasures/test_utils.jl")
 
-end # module VectorBijectorsProbabilityMeasuresExt
+end # module PlaiceProbabilityMeasuresExt

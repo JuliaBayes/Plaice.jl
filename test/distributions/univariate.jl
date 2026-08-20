@@ -2,7 +2,7 @@ module VBUnivariateTests
 
 using Distributions
 using Test
-using VectorBijectors
+using Plaice
 using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
@@ -123,7 +123,7 @@ heterogeneous_mixtures = [
 
 @testset "Univariates" begin
     for d in univariates
-        VectorBijectors.test_all(d; expected_zero_allocs=(from_vec, from_linked_vec))
+        Plaice.test_all(d; expected_zero_allocs=(from_vec, from_linked_vec))
     end
 
     for d in heterogeneous_mixtures
@@ -132,7 +132,7 @@ heterogeneous_mixtures = [
         else
             ()
         end
-        VectorBijectors.test_all(d; expected_zero_allocs=expected_zero_allocs)
+        Plaice.test_all(d; expected_zero_allocs=expected_zero_allocs)
     end
 end
 

@@ -1,10 +1,10 @@
-module VectorBijectorsDistributionsExt
+module PlaiceDistributionsExt
 
-using VectorBijectors
+using Plaice
 using Distributions
 using VarNames
 
-const VB = VectorBijectors
+const VB = Plaice
 const D = Distributions
 
 include("Distributions/test_utils.jl")
@@ -16,4 +16,4 @@ include("Distributions/reshaped.jl")
 include("Distributions/product.jl")
 include("Distributions/order.jl")
 
-end # module VectorBijectorsDistributionsExt
+end # module PlaiceDistributionsExt

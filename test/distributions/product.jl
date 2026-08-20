@@ -4,7 +4,7 @@ using Distributions
 using LinearAlgebra
 using FillArrays: Fill
 using Test
-using VectorBijectors
+using Plaice
 import DifferentiationInterface as DI
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
@@ -106,11 +106,11 @@ enzyme_failures = [
 
 @testset "Product distributions" begin
     for d in products
-        VectorBijectors.test_all(d; adtypes=adtypes, expected_zero_allocs=())
+        Plaice.test_all(d; adtypes=adtypes, expected_zero_allocs=())
     end
 
     for d in nested_product_namedtuple
-        VectorBijectors.test_all(
+        Plaice.test_all(
             d;
             adtypes=adtypes,
             expected_zero_allocs=(),
@@ -119,7 +119,7 @@ enzyme_failures = [
     end
 
     for d in heterogeneous_products
-        VectorBijectors.test_all(
+        Plaice.test_all(
             d;
             adtypes=adtypes,
             expected_zero_allocs=(),
@@ -129,13 +129,13 @@ enzyme_failures = [
 
     no_enzyme_adtypes = filter(adtype -> !(adtype isa DI.AutoEnzyme), adtypes)
     for d in enzyme_failures
-        VectorBijectors.test_all(
+        Plaice.test_all(
             d;
             adtypes=no_enzyme_adtypes,
             expected_zero_allocs=(),
             test_construction_type_stable=false,
         )
-        @test_throws Exception VectorBijectors.test_ad(
+        @test_throws Exception Plaice.test_ad(
             d,
             adtypes=DI.AutoEnzyme(;
                 mode=set_runtime_activity(Reverse),

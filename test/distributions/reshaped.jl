@@ -3,7 +3,7 @@ module VBReshapedTests
 using Distributions
 using LinearAlgebra
 using Test
-using VectorBijectors
+using Plaice
 import DifferentiationInterface as DI
 using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
@@ -40,14 +40,14 @@ reshaped_no_enzyme = [reshape(Beta(2, 2), (1, 1, 1, 1, 1))]
 
 @testset "Reshaped distributions" begin
     for d in reshaped
-        VectorBijectors.test_all(d; expected_zero_allocs=())
+        Plaice.test_all(d; expected_zero_allocs=())
     end
 
     for d in reshaped_no_enzyme
         @static if VERSION >= v"1.11-"
-            VectorBijectors.test_all(d; expected_zero_allocs=())
+            Plaice.test_all(d; expected_zero_allocs=())
         else
-            VectorBijectors.test_all(d; adtypes=adtypes_no_enz_rvs, expected_zero_allocs=())
+            Plaice.test_all(d; adtypes=adtypes_no_enz_rvs, expected_zero_allocs=())
         end
     end
 end

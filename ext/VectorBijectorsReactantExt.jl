@@ -1,12 +1,12 @@
-module VectorBijectorsReactantExt
+module PlaiceReactantExt
 
-using VectorBijectors
+using Plaice
 using Enzyme
 using Reactant
 using Test
 import DifferentiationInterface as DI
 
-const VB = VectorBijectors
+const VB = Plaice
 
 function VB.test_reactant(d)
     x = VB.rand_safe_ad(d)
@@ -75,4 +75,4 @@ function VB.test_reactant(d)
     end
 end
 
-end # module VectorBijectorsReactantExt
+end # module PlaiceReactantExt

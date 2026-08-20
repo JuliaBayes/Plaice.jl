@@ -3,7 +3,7 @@ module VBMultivariateTests
 using Distributions
 using LinearAlgebra
 using Test
-using VectorBijectors
+using Plaice
 using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
@@ -31,7 +31,7 @@ multivariates = [
         else
             (to_vec, from_vec, to_linked_vec, from_linked_vec)
         end
-        VectorBijectors.test_all(d; expected_zero_allocs=expected_zero_allocs)
+        Plaice.test_all(d; expected_zero_allocs=expected_zero_allocs)
     end
 end
 

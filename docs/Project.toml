@@ -4,7 +4,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
 FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
-VectorBijectors = "55802ec2-189d-45e6-a786-b4d97e4775f1"
+Plaice = "55802ec2-189d-45e6-a786-b4d97e4775f1"
 
 [compat]
 DifferentiationInterface = "0.7"
@@ -12,3 +12,6 @@ Distributions = "0.25"
 Documenter = "1"
 DocumenterCodeBlocks = "1"
 FiniteDifferences = "0.12"
+
+[sources]
+Plaice = {path = ".."}

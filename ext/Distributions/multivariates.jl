@@ -42,10 +42,10 @@ VB.linked_optic_vec(d::D.AbstractMvLogNormal) = VB.optic_vec(d)
 
 # Simplex distributions
 const SIMPLEX_MULTIVARIATES = Union{D.Dirichlet,D.MvLogitNormal}
-VB.VectorBijectors.from_linked_vec(::SIMPLEX_MULTIVARIATES) =
+VB.Plaice.from_linked_vec(::SIMPLEX_MULTIVARIATES) =
     VB.inverse(VB.SimplexBijector())
-VB.VectorBijectors.to_linked_vec(::SIMPLEX_MULTIVARIATES) = VB.SimplexBijector()
-VB.VectorBijectors.linked_vec_length(d::SIMPLEX_MULTIVARIATES) = length(d) - 1
+VB.Plaice.to_linked_vec(::SIMPLEX_MULTIVARIATES) = VB.SimplexBijector()
+VB.Plaice.linked_vec_length(d::SIMPLEX_MULTIVARIATES) = length(d) - 1
 function VB.linked_optic_vec(d::SIMPLEX_MULTIVARIATES)
     return fill(nothing, VB.linked_vec_length(d))
 end

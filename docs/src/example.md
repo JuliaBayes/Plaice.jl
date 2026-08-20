@@ -7,7 +7,7 @@ Here we provide two different worked examples of defining a custom bijector.
 We start with something simple: a bijector that performs a cyclic permutation of the elements of a vector.
 
 ```@example cyclic
-using VectorBijectors
+using Plaice
 
 struct CircShift
     shift::Int
@@ -41,7 +41,7 @@ This means that the log-absolute determinant of the Jacobian is always `0`.
 We can now implement `with_logabsdet_jacobian`.
 
 ```@example cyclic
-function VectorBijectors.with_logabsdet_jacobian(
+function Plaice.with_logabsdet_jacobian(
     b::CircShift,
     x::AbstractVector{T},
 ) where {T<:Real}
@@ -52,7 +52,7 @@ end
 
 !!! note
 
-    `with_logabsdet_jacobian` actually belongs to the ChangesOfVariables.jl package, but VectorBijectors.jl re-exports it so that you don't need to import it separately if VectorBijectors is already a dependency.
+    `with_logabsdet_jacobian` actually belongs to the ChangesOfVariables.jl package, but Plaice.jl re-exports it so that you don't need to import it separately if Plaice is already a dependency.
 
 It is good practice to let the type of the input determine the type of the log-Jacobian term here.
 However, you might also ask: since a cyclic permutation is also well-defined for arrays of non-real types, should we also allow that?
@@ -62,7 +62,7 @@ We could choose `0.0::Float64`, but that is actually not the best idea: if the F
 To avoid this, we choose the 'lowest' type in the promotion hierarchy, which is `false::Bool`.
 
 ```@example cyclic
-function VectorBijectors.with_logabsdet_jacobian(b::CircShift, x::AbstractVector)
+function Plaice.with_logabsdet_jacobian(b::CircShift, x::AbstractVector)
     y = circshift(x, b.shift)
     return y, false
 end
@@ -82,12 +82,12 @@ You can implement this simply by calling `first(with_logabsdet_jacobian(b, x))` 
 Finally, we also define the inverse bijector:
 
 ```@example cyclic
-VectorBijectors.inverse(b::CircShift) = CircShift(-b.shift)
+Plaice.inverse(b::CircShift) = CircShift(-b.shift)
 ```
 
 !!! note
 
-    Similarly to `with_logabsdet_jacobian`, `inverse` is actually defined in the InverseFunctions.jl package, but VectorBijectors.jl re-exports it.
+    Similarly to `with_logabsdet_jacobian`, `inverse` is actually defined in the InverseFunctions.jl package, but Plaice.jl re-exports it.
 
 Now we can use the inverse bijector:
 
@@ -110,7 +110,7 @@ $$y_1 = \frac{x_1}{1 - x_3}; \qquad y_2 = \frac{x_2}{1 - x_3}$$
 We can implement this first:
 
 ```@example stereographic
-using VectorBijectors
+using Plaice
 
 struct StereographicProj end
 function (s::StereographicProj)(x::AbstractVector{T}) where {T<:Real}
@@ -189,7 +189,7 @@ $$|\det(J)| = \frac{1}{|x_3| (1 - x_3)^2},$$
 (`(1 - x_3)^2` is always non-negative, of course); and thus
 
 ```@example stereographic
-function VectorBijectors.with_logabsdet_jacobian(
+function Plaice.with_logabsdet_jacobian(
     b::StereographicProj,
     x::AbstractVector{T},
 ) where {T<:Real}
@@ -239,7 +239,7 @@ Now, if we wanted to be more efficient, we might notice that `one(T) - x[3]` is 
 So we could also write:
 
 ```@example stereographic
-function VectorBijectors.with_logabsdet_jacobian(
+function Plaice.with_logabsdet_jacobian(
     s::StereographicProj,
     x::AbstractVector{T},
 ) where {T<:Real}
@@ -270,8 +270,8 @@ Base.rand(::UnitSphere) = normalize(rand(3))
 Then, we could define
 
 ```@example stereographic
-VectorBijectors.to_linked_vec(::UnitSphere) = StereographicProj()
-VectorBijectors.linked_vec_length(::UnitSphere) = 2
+Plaice.to_linked_vec(::UnitSphere) = StereographicProj()
+Plaice.linked_vec_length(::UnitSphere) = 2
 ```
 
 and that would allow us to use `UnitSphere` as a distribution in a probabilistic programming language.

@@ -1,4 +1,4 @@
-name = "VectorBijectors"
+name = "Plaice"
 uuid = "55802ec2-189d-45e6-a786-b4d97e4775f1"
 version = "0.1.0"
 authors = ["Penelope Yong <penelopeysm@gmail.com>"]
@@ -22,9 +22,9 @@ ProbabilityMeasures = "d96443b0-2461-4412-bb6f-797ac5201ef9"
 Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 
 [extensions]
-VectorBijectorsDistributionsExt = ["Distributions", "LinearAlgebra", "Test", "VarNames"]
-VectorBijectorsProbabilityMeasuresExt = ["ProbabilityMeasures", "Test", "VarNames"]
-VectorBijectorsReactantExt = ["Enzyme", "Reactant", "Test"]
+PlaiceDistributionsExt = ["Distributions", "LinearAlgebra", "Test", "VarNames"]
+PlaiceProbabilityMeasuresExt = ["ProbabilityMeasures", "Test", "VarNames"]
+PlaiceReactantExt = ["Enzyme", "Reactant", "Test"]
 
 [compat]
 ChangesOfVariables = "0.1"

@@ -3,7 +3,7 @@ module VBCholeskyTests
 using Distributions
 using LinearAlgebra
 using Test
-using VectorBijectors
+using Plaice
 import DifferentiationInterface as DI
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
@@ -32,7 +32,7 @@ dists = [
 
 @testset "Cholesky" begin
     for d in dists
-        VectorBijectors.test_all(d; adtypes=adtypes, expected_zero_allocs=())
+        Plaice.test_all(d; adtypes=adtypes, expected_zero_allocs=())
     end
 end
 

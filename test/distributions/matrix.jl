@@ -5,7 +5,7 @@ using LinearAlgebra
 using Test
 using PDMats
 import DifferentiationInterface as DI
-using VectorBijectors
+using Plaice
 using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
 using ReverseDiff: ReverseDiff
@@ -47,9 +47,9 @@ matrix_dists = [
     for d in matrix_dists
         kwargs = (expected_zero_allocs=(), test_in_support=test_in_support(d))
         if d isa LKJ
-            VectorBijectors.test_all(d; adtypes=lkj_test_adtypes, kwargs...)
+            Plaice.test_all(d; adtypes=lkj_test_adtypes, kwargs...)
         else
-            VectorBijectors.test_all(d; kwargs...)
+            Plaice.test_all(d; kwargs...)
         end
     end
 end

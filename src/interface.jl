@@ -1,5 +1,5 @@
 """
-    VectorBijectors.from_vec(dist)
+    Plaice.from_vec(dist)
 
 Returns a function that can be used to convert a vectorised sample from `d` back to its
 original form.
@@ -9,7 +9,7 @@ original form.
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: from_vec; using Distributions
+julia> using Plaice: from_vec; using Distributions
 
 julia> d = Beta(2, 2); from_vec(d)([0.5])
 0.5
@@ -21,7 +21,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); from_vec(d)([0.
 function from_vec end
 
 """
-    VectorBijectors.to_vec(dist)
+    Plaice.to_vec(dist)
 
 Returns a function that can be used to vectorise a sample from `d`.
 
@@ -30,7 +30,7 @@ Returns a function that can be used to vectorise a sample from `d`.
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: to_vec; using Distributions
+julia> using Plaice: to_vec; using Distributions
 
 julia> d = Beta(2, 2); to_vec(d)(0.5)
 1-element Vector{Float64}:
@@ -45,7 +45,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); to_vec(d)((a = 
 function to_vec end
 
 """
-    VectorBijectors.optic_vec(dist)
+    Plaice.optic_vec(dist)
 
 Returns a vector of optics (from VarNames.jl), which describe how each element in the
 vectorised sample from `d` can be accessed from the original sample.
@@ -67,7 +67,7 @@ first element of the vector is the `.a` component of the sample', and similarly 
 `Optic(.b)`.
 
 ```jldoctest
-julia> using VectorBijectors: optic_vec; using Distributions
+julia> using Plaice: optic_vec; using Distributions
 
 julia> d = Beta(2, 2); optic_vec(d)
 1-element Vector{VarNames.Iden}:
@@ -82,7 +82,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); optic_vec(d)
 function optic_vec end
 
 """
-    VectorBijectors.from_linked_vec(dist)
+    Plaice.from_linked_vec(dist)
 
 Returns a function that can be used to convert an unconstrained vector back to a sample from
 `d`.
@@ -92,7 +92,7 @@ Returns a function that can be used to convert an unconstrained vector back to a
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: from_linked_vec; using Distributions, VectorBijectors
+julia> using Plaice: from_linked_vec; using Distributions, Plaice
 
 julia> d = Beta(2, 2); from_linked_vec(d)([1.0])
 0.7310585786300049
@@ -110,7 +110,7 @@ julia> f = from_linked_vec(d); with_logabsdet_jacobian(f, [0.2, 1.0])
 function from_linked_vec end
 
 """
-    VectorBijectors.to_linked_vec(dist)
+    Plaice.to_linked_vec(dist)
 
 Returns a function that can be used to convert a sample from `d` to an unconstrained vector.
 
@@ -119,7 +119,7 @@ Returns a function that can be used to convert a sample from `d` to an unconstra
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: to_linked_vec; using Distributions, VectorBijectors
+julia> using Plaice: to_linked_vec; using Distributions, Plaice
 
 julia> d = Beta(2, 2); to_linked_vec(d)(0.5)
 1-element Vector{Float64}:
@@ -140,7 +140,7 @@ julia> f = to_linked_vec(d); with_logabsdet_jacobian(f, (a = 0.2, b = 0.5))
 function to_linked_vec end
 
 """
-    VectorBijectors.linked_optic_vec(dist)
+    Plaice.linked_optic_vec(dist)
 
 Returns a vector of optics (from VarNames.jl), which describe how each element in the
 unconstrained vector representation of a sample from `d` is related to the original sample.
@@ -169,7 +169,7 @@ the second by `.b`), the return value of `linked_optic_vec` is the same as that 
 `optic_vec`.
 
 ```jldoctest
-julia> using VectorBijectors: linked_optic_vec; using Distributions
+julia> using Plaice: linked_optic_vec; using Distributions
 
 julia> d = Beta(2, 2); linked_optic_vec(d)
 1-element Vector{VarNames.Iden}:
@@ -184,7 +184,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); linked_optic_ve
 function linked_optic_vec end
 
 """
-    VectorBijectors.vec_length(dist)
+    Plaice.vec_length(dist)
 
 Returns the length of the vector representation of a sample from `d`, i.e.,
 `length(to_vec(d)(rand(d)))`. However, it does this without actually drawing a sample.
@@ -192,7 +192,7 @@ Returns the length of the vector representation of a sample from `d`, i.e.,
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: vec_length; using Distributions
+julia> using Plaice: vec_length; using Distributions
 
 julia> d = Beta(2, 2); vec_length(d)
 1
@@ -204,7 +204,7 @@ julia> d = product_distribution((a = Normal(), b = Beta(2, 2))); vec_length(d)
 function vec_length end
 
 """
-    VectorBijectors.linked_vec_length(dist)
+    Plaice.linked_vec_length(dist)
 
 Returns the length of the unconstrained vector representation of a sample from `d`, i.e.,
 `length(to_linked_vec(d)(rand(d)))`. However, it does this without actually drawing a
@@ -213,7 +213,7 @@ sample.
 ## Examples
 
 ```jldoctest
-julia> using VectorBijectors: linked_vec_length; using Distributions
+julia> using Plaice: linked_vec_length; using Distributions
 
 julia> d = Beta(2, 2); linked_vec_length(d)
 1
@@ -226,7 +226,7 @@ function linked_vec_length end
 
 for f in (:from_vec, :to_vec, :from_linked_vec, :to_linked_vec)
     @eval begin
-        function with_logabsdet_jacobian(::typeof(VectorBijectors.$f), ::Any)
+        function with_logabsdet_jacobian(::typeof(Plaice.$f), ::Any)
             return error(
                 "`" *
                 string($f) *

@@ -3,7 +3,7 @@ module VBOrderTests
 using Distributions
 using LinearAlgebra
 using Test
-using VectorBijectors
+using Plaice
 import DifferentiationInterface as DI
 using Enzyme: Enzyme
 using ForwardDiff: ForwardDiff
@@ -32,8 +32,8 @@ joint_test_adtypes = [
 @testset "Order statistics" begin
     for d in base_dists
         unvec_only = (from_vec, from_linked_vec)
-        VectorBijectors.test_all(OrderStatistic(d, 10, 1); expected_zero_allocs=unvec_only)
-        VectorBijectors.test_all(OrderStatistic(d, 10, 10); expected_zero_allocs=unvec_only)
+        Plaice.test_all(OrderStatistic(d, 10, 1); expected_zero_allocs=unvec_only)
+        Plaice.test_all(OrderStatistic(d, 10, 10); expected_zero_allocs=unvec_only)
         # JointOrderStatistics is only defined for continuous distributions (technically, it
         # *should* work for discrete distributions whose support is some set which has a
         # total order, but Distributions.jl doesn't actually implement that).
@@ -43,13 +43,13 @@ joint_test_adtypes = [
             # See https://github.com/TuringLang/Bijectors.jl/issues/441 for details about
             # the unusually large atol.
             unlinked_only = (from_vec, to_vec)
-            VectorBijectors.test_all(
+            Plaice.test_all(
                 JointOrderStatistics(d, 4);
                 expected_zero_allocs=unlinked_only,
                 adtypes=joint_test_adtypes,
                 roundtrip_atol=1e-1,
             )
-            VectorBijectors.test_all(
+            Plaice.test_all(
                 JointOrderStatistics(d, 10, 2:5);
                 expected_zero_allocs=unlinked_only,
                 adtypes=joint_test_adtypes,

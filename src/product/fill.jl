@@ -41,7 +41,7 @@ end
 _map_inverse(t::Elementwise) = Elementwise(inverse(t.value), t.size)
 
 """
-    VectorBijectors.has_constant_vec_bijector(::Type{T}) where {T}
+    Plaice.has_constant_vec_bijector(::Type{T}) where {T}
 
 Return `true` if the vector bijector for each element of a collection of distributions is
 determined solely by the type of the distribution, and not by any runtime parameter

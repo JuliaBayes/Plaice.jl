@@ -1,4 +1,4 @@
-using VectorBijectors: TypedIdentity, Log
+using Plaice: TypedIdentity, Log
 using Test
 
 VB.from_linked_vec(d::PM.ContinuousUnivariateMeasure) =

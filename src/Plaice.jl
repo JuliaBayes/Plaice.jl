@@ -1,4 +1,4 @@
-module VectorBijectors
+module Plaice
 
 using VarNames: VarNames, @opticof
 import ChangesOfVariables: with_logabsdet_jacobian
@@ -45,4 +45,4 @@ include("product/fill.jl")
 # Put last to avoid cluttering namespace
 include("test_utils.jl")
 
-end # module VectorBijectors
+end # module Plaice

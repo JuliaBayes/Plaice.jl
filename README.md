@@ -1,8 +1,8 @@
-# VectorBijectors.jl
+# Plaice.jl
 
-[![Stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliabayes.org/VectorBijectors.jl/)
+[![Stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliabayes.org/Plaice.jl/)
 
-VectorBijectors.jl converts samples from distributions to and from **vectors**.
+Plaice.jl converts samples from distributions to and from **vectors**.
 
 It assumes that there are three forms of samples from a distribution `d` that we are interested in:
 
@@ -17,12 +17,12 @@ It assumes that there are three forms of samples from a distribution `d` that we
 
 and provides functionality to convert between these three forms.
 
-On top of defining a clearer interface than Bijectors.jl (from which much code is lifted), VectorBijectors also has the aim of being:
+On top of defining a clearer interface than Bijectors.jl (from which much code is lifted), Plaice also has the aim of being:
 
  1. Usable on GPUs, particularly via Reactant.jl.
 
  2. More performant and compatible with modern automatic differentiation.
 
 Much of this is in fact contingent on the underlying distributions.
-To this end, VectorBijectors is also intentionally decoupled from Distributions.jl: the pre-existing functionality for Distributions.jl is provided in an extension.
+To this end, Plaice is also intentionally decoupled from Distributions.jl: the pre-existing functionality for Distributions.jl is provided in an extension.
 This allows other distribution providers to use the functionality in this library as well.
