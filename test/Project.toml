@@ -14,7 +14,6 @@ Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VarNames = "09a315b2-63fc-4165-8d7f-d59368e770cc"
-Plaice = "55802ec2-189d-45e6-a786-b4d97e4775f1"
 
 [sources]
 Plaice = {path = ".."}
