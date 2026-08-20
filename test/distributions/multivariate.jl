@@ -29,7 +29,7 @@ multivariates = [
         expected_zero_allocs = if d isa Union{Dirichlet,MvLogitNormal,MvLogNormal}
             (to_vec, from_vec)
         else
-            (to_vec, from_vec, to_linked_vec, from_linked_vec)
+            (to_vec, from_vec, to_unconstrained_vec, from_unconstrained_vec)
         end
         Plaice.test_all(d; expected_zero_allocs=expected_zero_allocs)
     end

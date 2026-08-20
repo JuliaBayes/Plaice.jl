@@ -22,7 +22,7 @@ const adtypes = [
 ]
 
 dists = [
-    # Note: can't test LKJCholesky(1, ...) because its linked vector is length-zero and
+    # Note: can't test LKJCholesky(1, ...) because its unconstrained vector is length-zero and
     # DifferentiationInterface trips up with empty vectors.
     LKJCholesky(3, 1.0, 'U'),
     LKJCholesky(3, 1.0, 'L'),

@@ -9,13 +9,13 @@ function VB.from_vec(d::D.ReshapedDistribution)
 end
 VB.vec_length(d::D.ReshapedDistribution) = VB.vec_length(d.dist)
 
-function VB.to_linked_vec(d::D.ReshapedDistribution)
-    return VB.ReshapeWrapper(size(d), size(d.dist), VB.to_linked_vec(d.dist))
+function VB.to_unconstrained_vec(d::D.ReshapedDistribution)
+    return VB.ReshapeWrapper(size(d), size(d.dist), VB.to_unconstrained_vec(d.dist))
 end
-function VB.from_linked_vec(d::D.ReshapedDistribution)
-    return VB.InvReshapeWrapper(size(d), size(d.dist), VB.from_linked_vec(d.dist))
+function VB.from_unconstrained_vec(d::D.ReshapedDistribution)
+    return VB.InvReshapeWrapper(size(d), size(d.dist), VB.from_unconstrained_vec(d.dist))
 end
-VB.linked_vec_length(d::D.ReshapedDistribution) = VB.linked_vec_length(d.dist)
+VB.unconstrained_vec_length(d::D.ReshapedDistribution) = VB.unconstrained_vec_length(d.dist)
 
 # optic_vec requires some care. We can't just reuse the original distribution's optics,
 # i.e., `optic_vec(d) = optic_vec(d.dist)` because the axes may have changed due to
@@ -61,16 +61,16 @@ function VB.optic_vec(d::ReshapedUnivariateDistribution)
     return [VarNames.Index(size(d), (;))]
 end
 
-# linked_optic_vec is the same...
-function VB.linked_optic_vec(d::D.ReshapedDistribution)
-    original_optics = VB.linked_optic_vec(d.dist)
+# unconstrained_optic_vec is the same...
+function VB.unconstrained_optic_vec(d::D.ReshapedDistribution)
+    original_optics = VB.unconstrained_optic_vec(d.dist)
     linear_indices_original = LinearIndices(size(d.dist))
     cartesian_indices_reshaped = CartesianIndices(size(d))
     mapped_optics = map(original_optics) do opt
         if opt isa VarNames.Index
             if !isempty(opt.kw)
                 error(
-                    "linked_optic_vec for ReshapedDistribution only supports simple Index optics",
+                    "unconstrained_optic_vec for ReshapedDistribution only supports simple Index optics",
                 )
             end
             linear_index = linear_indices_original[opt.ix...]
@@ -80,11 +80,11 @@ function VB.linked_optic_vec(d::D.ReshapedDistribution)
             # ... but we just need to make sure to forward any `nothing`s.
             return nothing
         else
-            error("linked_optic_vec for ReshapedDistribution only supports Index optics")
+            error("unconstrained_optic_vec for ReshapedDistribution only supports Index optics")
         end
     end
     return mapped_optics
 end
-function VB.linked_optic_vec(d::ReshapedUnivariateDistribution)
+function VB.unconstrained_optic_vec(d::ReshapedUnivariateDistribution)
     return [VarNames.Index(size(d), (;))]
 end

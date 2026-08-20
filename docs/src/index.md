@@ -8,14 +8,14 @@ It assumes that there are three forms of samples from a distribution `d` that we
 
  2. **A vectorised form**, which is a vector that contains a flattened version of the original form.
 
- 3. **A linked vectorised form**, which is a vector in which:
+ 3. **A unconstrained vectorised form**, which is a vector in which:
 
       + each element is independent; and
       + each element is unconstrained (can take any value in ℝ).
 
-Note that because of the independence requirement, the linked vectorised form may have a different dimension to the vectorised form.
+Note that because of the independence requirement, the unconstrained vectorised form may have a different dimension to the vectorised form.
 For example, when sampling from a `Dirichlet` distribution, the original form is a vector that always sums to 1.
-The linked vectorised form will have one element less than the original form, because this constraint is eliminated.
+The unconstrained vectorised form will have one element less than the original form, because this constraint is eliminated.
 
 Plaice.jl provides functionality to convert between these three forms, via the following functions.
 Assuming that `x = rand(d)` for some distribution `d`:
@@ -24,10 +24,10 @@ Assuming that `x = rand(d)` for some distribution `d`:
   - `from_vec(d)` is the inverse of `to_vec(d)`
   - `vec_length(d)` returns the length of `to_vec(d)(x)`
   - `optic_vec(d)` returns a vector of optics that describes how each element of `to_vec(d)(x)` is accessed from `x`
-  - `to_linked_vec(d)` is a function which converts `x` to the linked vectorised form
-  - `from_linked_vec(d)` is the inverse of `to_linked_vec(d)`
-  - `linked_vec_length(d)` returns the length of `to_linked_vec(d)(x)`
-  - `linked_optic_vec(d)` returns a vector of optics that describes how each element of `to_linked_vec(d)(x)` is accessed from `x` (if possible)
+  - `to_unconstrained_vec(d)` is a function which converts `x` to the unconstrained vectorised form
+  - `from_unconstrained_vec(d)` is the inverse of `to_unconstrained_vec(d)`
+  - `unconstrained_vec_length(d)` returns the length of `to_unconstrained_vec(d)(x)`
+  - `unconstrained_optic_vec(d)` returns a vector of optics that describes how each element of `to_unconstrained_vec(d)(x)` is accessed from `x` (if possible)
 
 For example:
 
@@ -42,7 +42,7 @@ julia> to_vec(d)(x)
 1-element Vector{Float64}:
  0.5602086057097567
 
-julia> to_linked_vec(d)(x)
+julia> to_unconstrained_vec(d)(x)
 1-element Vector{Float64}:
  0.24200871395677753
 ```
@@ -56,18 +56,18 @@ The full Plaice interface consists of the following functions:
 ```@docs
 Plaice.from_vec
 Plaice.to_vec
-Plaice.from_linked_vec
-Plaice.to_linked_vec
+Plaice.from_unconstrained_vec
+Plaice.to_unconstrained_vec
 Plaice.vec_length
-Plaice.linked_vec_length
+Plaice.unconstrained_vec_length
 Plaice.optic_vec
-Plaice.linked_optic_vec
+Plaice.unconstrained_optic_vec
 ```
 
 In practice, if your distribution is a univariate distribution, you will probably only need to implement `scalar_to_scalar_bijector` (see below).
 
-For multivariate and matrix distributions, there are default implementations of the non-linked versions (i.e., `from_vec`, `to_vec`, `vec_length`, and `optic_vec`) which should already be optimal.
-However you will have to define the linked versions (see [the examples page](@ref example) for more info).
+For multivariate and matrix distributions, there are default implementations of the non-unconstrained versions (i.e., `from_vec`, `to_vec`, `vec_length`, and `optic_vec`) which should already be optimal.
+However you will have to define the unconstrained versions (see [the examples page](@ref example) for more info).
 
 If you have a very customised distribution, you will likely have to implement all the functions yourself.
 

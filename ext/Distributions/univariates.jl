@@ -1,20 +1,20 @@
 # General definitions that apply to all univariate distributions.
-function VB.from_linked_vec(d::D.UnivariateDistribution)
+function VB.from_unconstrained_vec(d::D.UnivariateDistribution)
     return VB.OnlyWrap(VB.inverse(VB.scalar_to_scalar_bijector(d)))
 end
-function VB.to_linked_vec(d::D.UnivariateDistribution)
+function VB.to_unconstrained_vec(d::D.UnivariateDistribution)
     return VB.VectWrap(VB.scalar_to_scalar_bijector(d))
 end
 VB.from_vec(::D.UnivariateDistribution) = VB.OnlyWrap(VB.TypedIdentity())
 VB.to_vec(::D.UnivariateDistribution) = VB.VectWrap(VB.TypedIdentity())
 
-# vect_length and linked_vec_length are trivial
+# vect_length and unconstrained_vec_length are trivial
 VB.vec_length(::D.UnivariateDistribution) = 1
-VB.linked_vec_length(::D.UnivariateDistribution) = 1
+VB.unconstrained_vec_length(::D.UnivariateDistribution) = 1
 
 # Optics are trivially obtainable.
 VB.optic_vec(::D.UnivariateDistribution) = [VarNames.Iden()]
-VB.linked_optic_vec(::D.UnivariateDistribution) = [VarNames.Iden()]
+VB.unconstrained_optic_vec(::D.UnivariateDistribution) = [VarNames.Iden()]
 
 # These continuous distributions have support over the entire real line.
 const IDENTITY_UNIVARIATES = Union{

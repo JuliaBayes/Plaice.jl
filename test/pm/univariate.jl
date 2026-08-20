@@ -15,7 +15,7 @@ univariates = [PM.Normal(), PM.Exponential(), PM.Uniform(0.0, 1.0)]
 
 @testset "PM Univariates" begin
     for d in univariates
-        Plaice.test_all(d; expected_zero_allocs=(from_vec, from_linked_vec))
+        Plaice.test_all(d; expected_zero_allocs=(from_vec, from_unconstrained_vec))
     end
 end
 

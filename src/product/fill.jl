@@ -2,8 +2,8 @@
 # = product_distribution(fill(Beta(2, 2), N))). The idea is that when the vector bijector is
 # determined solely by the type, we can compute the transform once and reuse it.
 #
-# For example when N = 10, the optimised path here brings from_linked_vec(d)(y) down 
-# from 731 ns to 59 ns, and to_linked_vec(d)(x) from 278 ns to 75 ns.
+# For example when N = 10, the optimised path here brings from_unconstrained_vec(d)(y) down 
+# from 731 ns to 59 ns, and to_unconstrained_vec(d)(x) from 278 ns to 75 ns.
 
 using FillArrays: FillArrays
 

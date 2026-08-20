@@ -267,8 +267,8 @@ Base.rand(::UnitSphere) = normalize(rand(3))
 Then, we could define
 
 ```@example stereographic
-Plaice.to_linked_vec(::UnitSphere) = StereographicProj()
-Plaice.linked_vec_length(::UnitSphere) = 2
+Plaice.to_unconstrained_vec(::UnitSphere) = StereographicProj()
+Plaice.unconstrained_vec_length(::UnitSphere) = 2
 ```
 
 and that would allow us to use `UnitSphere` as a distribution in a probabilistic programming language.

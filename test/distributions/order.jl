@@ -31,27 +31,27 @@ joint_test_adtypes = [
 
 @testset "Order statistics" begin
     for d in base_dists
-        unvec_only = (from_vec, from_linked_vec)
+        unvec_only = (from_vec, from_unconstrained_vec)
         Plaice.test_all(OrderStatistic(d, 10, 1); expected_zero_allocs=unvec_only)
         Plaice.test_all(OrderStatistic(d, 10, 10); expected_zero_allocs=unvec_only)
         # JointOrderStatistics is only defined for continuous distributions (technically, it
         # *should* work for discrete distributions whose support is some set which has a
         # total order, but Distributions.jl doesn't actually implement that).
         if d isa ContinuousUnivariateDistribution
-            # In the unlinked case, the transform is identity.
+            # In the constrained case, the transform is identity.
             #
             # See https://github.com/TuringLang/Bijectors.jl/issues/441 for details about
             # the unusually large atol.
-            unlinked_only = (from_vec, to_vec)
+            constrained_only = (from_vec, to_vec)
             Plaice.test_all(
                 JointOrderStatistics(d, 4);
-                expected_zero_allocs=unlinked_only,
+                expected_zero_allocs=constrained_only,
                 adtypes=joint_test_adtypes,
                 roundtrip_atol=1e-1,
             )
             Plaice.test_all(
                 JointOrderStatistics(d, 10, 2:5);
-                expected_zero_allocs=unlinked_only,
+                expected_zero_allocs=constrained_only,
                 adtypes=joint_test_adtypes,
                 roundtrip_atol=1e-1,
             )

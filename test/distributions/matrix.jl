@@ -21,7 +21,7 @@ M = [1 2 3; 4 5 6]
 # https://github.com/TuringLang/Bijectors.jl/issues/434
 lkj_test_adtypes = [DI.AutoMooncake(), DI.AutoMooncakeForward()]
 
-# Don't check that from_linked_vec(d)(randn(...)) is in support for LKJ,
+# Don't check that from_unconstrained_vec(d)(randn(...)) is in support for LKJ,
 # The reason is because the inverse bijector for LKJ causes the diagonal
 # entries to be not exactly 1 due to numerical precision issues. This
 # should in principle be fixed, but for now we skip the test.

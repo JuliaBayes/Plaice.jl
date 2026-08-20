@@ -46,7 +46,7 @@ function VB.to_vec_for_logjac_test(
     return VB._make_transform(
         d.dists,
         VB.to_vec_for_logjac_test,
-        VB.linked_vec_length,
+        VB.unconstrained_vec_length,
         VB.ProductVecTransform,
     )
 end
@@ -56,7 +56,7 @@ function VB.from_vec_for_logjac_test(
     return VB._make_transform(
         d.dists,
         VB.from_vec_for_logjac_test,
-        VB.linked_vec_length,
+        VB.unconstrained_vec_length,
         VB.ProductVecInvTransform,
     )
 end

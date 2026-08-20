@@ -8,12 +8,12 @@ include("bijector_types.jl")
 include("interface.jl")
 export from_vec
 export to_vec
-export from_linked_vec
-export to_linked_vec
+export from_unconstrained_vec
+export to_unconstrained_vec
 export vec_length
-export linked_vec_length
+export unconstrained_vec_length
 export optic_vec
-export linked_optic_vec
+export unconstrained_optic_vec
 # utils
 export has_constant_vec_bijector
 export scalar_to_scalar_bijector

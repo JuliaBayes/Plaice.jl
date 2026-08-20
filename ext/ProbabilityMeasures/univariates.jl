@@ -1,18 +1,18 @@
 using Plaice: TypedIdentity, Log
 using Test
 
-VB.from_linked_vec(d::PM.ContinuousUnivariateMeasure) =
+VB.from_unconstrained_vec(d::PM.ContinuousUnivariateMeasure) =
     VB.OnlyWrap(VB.inverse(VB.scalar_to_scalar_bijector(d)))
-VB.to_linked_vec(d::PM.ContinuousUnivariateMeasure) =
+VB.to_unconstrained_vec(d::PM.ContinuousUnivariateMeasure) =
     VB.VectWrap(VB.scalar_to_scalar_bijector(d))
 VB.from_vec(::PM.ContinuousUnivariateMeasure) = VB.OnlyWrap(VB.TypedIdentity())
 VB.to_vec(::PM.ContinuousUnivariateMeasure) = VB.VectWrap(VB.TypedIdentity())
 
 VB.vec_length(::PM.ContinuousUnivariateMeasure) = 1
-VB.linked_vec_length(::PM.ContinuousUnivariateMeasure) = 1
+VB.unconstrained_vec_length(::PM.ContinuousUnivariateMeasure) = 1
 
 VB.optic_vec(::PM.ContinuousUnivariateMeasure) = [VarNames.Iden()]
-VB.linked_optic_vec(::PM.ContinuousUnivariateMeasure) = [VarNames.Iden()]
+VB.unconstrained_optic_vec(::PM.ContinuousUnivariateMeasure) = [VarNames.Iden()]
 
 # Distributions with support over the entire real line.
 VB.scalar_to_scalar_bijector(::PM.Normal) = VB.TypedIdentity()

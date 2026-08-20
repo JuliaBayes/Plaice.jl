@@ -17,7 +17,7 @@ _reshape_or_only(x, sz) = reshape([x], sz)
 
 Here, `original_size` is equal to `size(dist)`, and `reshaped_size` is the size after
 reshaping. The wrapped `bijector` converts a sample from `original_size` to a vector or
-linked vector. Thus, ReshapeWrapper must:
+unconstrained vector. Thus, ReshapeWrapper must:
 
 - first convert the input from `reshaped_size` to `original_size` via `reshape`
 - then apply the wrapped `bijector`.

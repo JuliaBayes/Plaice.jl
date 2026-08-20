@@ -47,16 +47,16 @@ function _isapprox_safe(x::Cholesky, y::Cholesky; kwargs...)
     return isapprox(x.UL, y.UL; kwargs...)
 end
 
-# When testing logjac for distributions where `vec_length(d) != linked_vec_length(d)`, if
-# we naively try to compute the logjacobian of the transformation from vector to linked
+# When testing logjac for distributions where `vec_length(d) != unconstrained_vec_length(d)`, if
+# we naively try to compute the logjacobian of the transformation from vector to unconstrained
 # vector form (or vice versa), it will error because the dimensions don't match (i.e., the
 # Jacobian is not square). See
 # https://turinglang.org/Bijectors.jl/stable/defining_examples/#Stereographic-projection
 # for an example of how to work around this issue.
 #
 # Here we define a function which converts a sample from `d` to a vector of length
-# `linked_vec_length(d)` but does NOT perform linking. This allows us to compute the
-# Jacobian from `to_vec_for_logjac_test(d)(x)` to `to_linked_vec(d)(x)`, which will be
+# `unconstrained_vec_length(d)` but does NOT perform linking. This allows us to compute the
+# Jacobian from `to_vec_for_logjac_test(d)(x)` to `to_unconstrained_vec(d)(x)`, which will be
 # square. The fallback definition is just to_vec(d), but we can overload this for specific
 # distributions.
 to_vec_for_logjac_test(d) = to_vec(d)
@@ -96,9 +96,9 @@ function test_all(
 end
 
 """
-Test that from_vec and to_vec are inverses, and likewise for from_linked_vec and
-to_linked_vec. This test checks `x ≈ from_vec(d)(to_vec(d)(x))` for random samples `x ~ d`
-(and likewise for the linked transforms).
+Test that from_vec and to_vec are inverses, and likewise for from_unconstrained_vec and
+to_unconstrained_vec. This test checks `x ≈ from_vec(d)(to_vec(d)(x))` for random samples `x ~ d`
+(and likewise for the unconstrained transforms).
 """
 function test_roundtrip(d)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
@@ -112,11 +112,11 @@ function test_roundtrip(d)
             end
         end
     end
-    @testset "roundtrip (linked): $(test_name(d))" begin
+    @testset "roundtrip (unconstrained): $(test_name(d))" begin
         for _ in 1:1000
             @testset let x = rand(d), d = d
-                ffwd = to_linked_vec(d)
-                frvs = from_linked_vec(d)
+                ffwd = to_unconstrained_vec(d)
+                frvs = from_unconstrained_vec(d)
                 xnew = frvs(ffwd(x))
                 # https://github.com/TuringLang/Bijectors.jl/issues/441
                 if _is_joint_order_statistics(d) &&
@@ -137,9 +137,9 @@ can_test_in_support(d, x) = false
 test_in_support(d, x) = error("not implemented")
 
 """
-Test that from_linked_vec and to_linked_vec are inverses.
+Test that from_unconstrained_vec and to_unconstrained_vec are inverses.
 
-If `test_in_support_flag`, then this additionally also tests that `from_linked_vec(dist)`
+If `test_in_support_flag`, then this additionally also tests that `from_unconstrained_vec(dist)`
 actually does map random vectors to the support of the distribution (i.e., `finv(y)` for
 some random `y` is in the support of `d`).
 
@@ -150,8 +150,8 @@ occasions where we disable this because of e.g. numerical issues, like for LKJ.
 function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
     # TODO: Use smarter test generation e.g. with property-based testing or at least
     # generate random parameters across the support
-    @testset "roundtrip inverse (linked): $(test_name(d))" begin
-        len = linked_vec_length(d)
+    @testset "roundtrip inverse (unconstrained): $(test_name(d))" begin
+        len = unconstrained_vec_length(d)
         x = rand(d)
 
         if test_in_support_flag && !can_test_in_support(d, x)
@@ -161,8 +161,8 @@ function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
 
         for _ in 1:100
             @testset let y = randn(len), d = d
-                ffwd = to_linked_vec(d)
-                frvs = from_linked_vec(d)
+                ffwd = to_unconstrained_vec(d)
+                frvs = from_unconstrained_vec(d)
                 x = frvs(y)
                 if test_in_support_flag
                     test_in_support(d, x)
@@ -185,7 +185,7 @@ function test_roundtrip_inverse(d, test_in_support_flag, atol, rtol)
 end
 
 """
-Test that the conversions to and from vector and linked vector forms for the given
+Test that the conversions to and from vector and unconstrained vector forms for the given
 distribution `d` are type-stable.
 
 Sometimes the *creation* of the bijector itself is not type-stable (e.g. for product
@@ -208,14 +208,14 @@ function test_type_stability(d, test_construction_type_stable=true)
             @inferred frvs(y)
         end
     end
-    @testset "type stability (linked): $(test_name(d))" begin
+    @testset "type stability (unconstrained): $(test_name(d))" begin
         @testset let x = x, d = d
             if test_construction_type_stable
-                @inferred to_linked_vec(d)
-                @inferred from_linked_vec(d)
+                @inferred to_unconstrained_vec(d)
+                @inferred from_unconstrained_vec(d)
             end
-            ffwd = to_linked_vec(d)
-            frvs = from_linked_vec(d)
+            ffwd = to_unconstrained_vec(d)
+            frvs = from_unconstrained_vec(d)
             @inferred ffwd(x)
             y = ffwd(x)
             @inferred frvs(y)
@@ -239,11 +239,11 @@ function test_optics(d)
         end
     end
 
-    @testset "linked_optic_vec: $(test_name(d))" begin
+    @testset "unconstrained_optic_vec: $(test_name(d))" begin
         # This is a lot harder to test. What we need to prove is that
         #       x = rand(d)
-        #       lv = to_linked_vec(d)(x)
-        #       lo = linked_optic_vec(d)
+        #       lv = to_unconstrained_vec(d)(x)
+        #       lo = unconstrained_optic_vec(d)
         #  then for each element of `lv, lo` we have that `lv[i]` depends only on lo[i](x)
         #  and not any other elements of `x`. Conceptually, this means that if we take the
         #  Jacobian of the link transform, row `i` should have nonzeros only in the columns
@@ -251,20 +251,20 @@ function test_optics(d)
         #  vector(!) so we need to flatten everything first, using `to_vec`.
         x = rand(d)
         xvec = to_vec(d)(x)
-        yvec = to_linked_vec(d)(x)
-        J = DI.jacobian(to_linked_vec(d) ∘ from_vec(d), ref_adtype, xvec)
+        yvec = to_unconstrained_vec(d)(x)
+        J = DI.jacobian(to_unconstrained_vec(d) ∘ from_vec(d), ref_adtype, xvec)
         o = optic_vec(d)
-        lo = linked_optic_vec(d)
+        lo = unconstrained_optic_vec(d)
         for i in 1:length(yvec)
-            linked_optic = lo[i]
-            if linked_optic !== nothing
+            unconstrained_optic = lo[i]
+            if unconstrained_optic !== nothing
                 # If the optic is non-nothing, then it refers to a specific element
                 # of x. That means that we should be able to find, which index of the
                 # input `xvec` it corresponds to, by finding the index `j` where
-                # `optic_vec(d)[j] === linked_optic`.
-                nonzero_index = findfirst(j -> o[j] == linked_optic, 1:length(xvec))
+                # `optic_vec(d)[j] === unconstrained_optic`.
+                nonzero_index = findfirst(j -> o[j] == unconstrained_optic, 1:length(xvec))
                 if nonzero_index === nothing
-                    error("linked_optic_vec produced an optic not found in optic_vec")
+                    error("unconstrained_optic_vec produced an optic not found in optic_vec")
                 end
                 for j in 1:length(xvec)
                     if j != nonzero_index
@@ -277,9 +277,9 @@ function test_optics(d)
 end
 
 """
-Test that the lengths of the vectors produced by the conversions to vector and linked
+Test that the lengths of the vectors produced by the conversions to vector and unconstrained
 vector forms for the given distribution `d` match those reported by `vec_length` and
-`linked_vec_length`.
+`unconstrained_vec_length`.
 """
 function test_vec_lengths(d)
     @testset "vector lengths: $(test_name(d))" begin
@@ -290,27 +290,27 @@ function test_vec_lengths(d)
             end
         end
     end
-    @testset "vector lengths (linked): $(test_name(d))" begin
+    @testset "vector lengths (unconstrained): $(test_name(d))" begin
         for _ in 1:10
             @testset let x = rand(d), d = d
-                y = to_linked_vec(d)(x)
-                @test length(y) == linked_vec_length(d)
+                y = to_unconstrained_vec(d)(x)
+                @test length(y) == unconstrained_vec_length(d)
             end
         end
     end
 end
 
 """
-Test that the conversions to and from vector and linked vector forms for the given
+Test that the conversions to and from vector and unconstrained vector forms for the given
 distribution `d` do not cause any heap allocations for the functions specified in
 `expected_zero_allocs`.
 """
 function test_allocations(d, expected_zero_allocs=())
-    ALLOWED_FUNCTIONS = (to_vec, from_vec, to_linked_vec, from_linked_vec)
+    ALLOWED_FUNCTIONS = (to_vec, from_vec, to_unconstrained_vec, from_unconstrained_vec)
     if any(f -> !(f in ALLOWED_FUNCTIONS), expected_zero_allocs)
         throw(ArgumentError("expected_zero_allocs can only contain: $ALLOWED_FUNCTIONS"))
     end
-    # For univariates, to_vec and to_linked_vec always cause allocations because they have
+    # For univariates, to_vec and to_unconstrained_vec always cause allocations because they have
     # to create a new vector.
     # TODO: Generalise to multivariates etc
     x = rand(d)
@@ -329,16 +329,16 @@ function test_allocations(d, expected_zero_allocs=())
             end
         end
     end
-    @testset "allocations (linked): $(test_name(d))" begin
+    @testset "allocations (unconstrained): $(test_name(d))" begin
         @testset let x = x, d = d
-            if to_linked_vec in expected_zero_allocs
-                ffwd = to_linked_vec(d)
+            if to_unconstrained_vec in expected_zero_allocs
+                ffwd = to_unconstrained_vec(d)
                 ffwd(x)
                 @test (@allocations ffwd(x)) == 0
             end
-            if from_linked_vec in expected_zero_allocs
-                yvec = to_linked_vec(d)(x)
-                frvs = from_linked_vec(d)
+            if from_unconstrained_vec in expected_zero_allocs
+                yvec = to_unconstrained_vec(d)(x)
+                frvs = from_unconstrained_vec(d)
                 frvs(yvec)
                 @test (@allocations frvs(yvec)) == 0
             end
@@ -369,8 +369,8 @@ function test_logjac(d, atol, rtol)
 
     # Link logjacs will not be zero, so we need to check against a chosen backend. Because
     # Jacobians need to map from vector to vector, here we test the transformation of the
-    # vectorised form to the linked vectorised form via the original sample.
-    @testset "logjac (linked): $(test_name(d))" begin
+    # vectorised form to the unconstrained vectorised form via the original sample.
+    @testset "logjac (unconstrained): $(test_name(d))" begin
         for _ in 1:100
             x = rand_safe_ad(d)
 
@@ -389,26 +389,26 @@ function test_logjac(d, atol, rtol)
             @testset let x = x, d = d
                 # Forward
                 xvec = to_vec(d)(x)
-                ffwd = to_linked_vec(d) ∘ from_vec(d)
+                ffwd = to_unconstrained_vec(d) ∘ from_vec(d)
                 y, vbt_logjac = with_logabsdet_jacobian(ffwd, xvec)
                 @test _isapprox_safe(y, ffwd(xvec); atol=atol, rtol=rtol)
                 # For the AD calculation we need to use to/from_vec_for_logjac_test instead,
                 # to make sure that the Jacobian is square.
                 ad_xvec = to_vec_for_logjac_test(d)(x)
-                ad_ffwd = to_linked_vec(d) ∘ from_vec_for_logjac_test(d)
+                ad_ffwd = to_unconstrained_vec(d) ∘ from_vec_for_logjac_test(d)
                 ad_logjac = first(logabsdet(DI.jacobian(ad_ffwd, ref_adtype, ad_xvec)))
                 @test vbt_logjac ≈ ad_logjac atol = atol rtol = rtol
             end
 
             @testset let x = x, d = d
                 # Reverse
-                yvec = to_linked_vec(d)(x)
-                vbt_frvs = to_vec(d) ∘ from_linked_vec(d)
+                yvec = to_unconstrained_vec(d)(x)
+                vbt_frvs = to_vec(d) ∘ from_unconstrained_vec(d)
                 x, vbt_logjac = with_logabsdet_jacobian(vbt_frvs, yvec)
                 @test _isapprox_safe(x, vbt_frvs(yvec); atol=atol, rtol=rtol)
                 # For the AD calculation we need to use to/from_vec_for_logjac_test instead,
                 # to make sure that the Jacobian is square.
-                ad_frvs = to_vec_for_logjac_test(d) ∘ from_linked_vec(d)
+                ad_frvs = to_vec_for_logjac_test(d) ∘ from_unconstrained_vec(d)
                 ad_logjac = first(logabsdet(DI.jacobian(ad_frvs, ref_adtype, yvec)))
                 @test vbt_logjac ≈ ad_logjac atol = atol rtol = rtol
             end
@@ -418,7 +418,7 @@ end
 
 """
 Test that various AD backends can differentiate the conversions to and from vector and
-linked vector forms for the given distribution `d`.
+unconstrained vector forms for the given distribution `d`.
 """
 function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
     # If `d` is a discrete distribution, Mooncake refuses to differentiate through the
@@ -442,7 +442,7 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
     @testset "AD forward: $(test_name(d))" begin
         x = rand_safe_ad(d)
         xvec = to_vec(d)(x)
-        ffwd = to_linked_vec(d) ∘ from_vec(d)
+        ffwd = to_unconstrained_vec(d) ∘ from_vec(d)
         ref_jac = DI.jacobian(ffwd, ref_adtype, xvec)
 
         ladj(xvec) = last(with_logabsdet_jacobian(ffwd, xvec))
@@ -464,8 +464,8 @@ function test_ad(d, adtypes::Vector{<:DI.AbstractADType}, atol, rtol)
 
     @testset "AD reverse: $(test_name(d))" begin
         x = rand_safe_ad(d)
-        yvec = to_linked_vec(d)(x)
-        frvs = to_vec(d) ∘ from_linked_vec(d)
+        yvec = to_unconstrained_vec(d)(x)
+        frvs = to_vec(d) ∘ from_unconstrained_vec(d)
         ref_jac = DI.jacobian(frvs, ref_adtype, yvec)
 
         ladj(yvec) = last(with_logabsdet_jacobian(frvs, yvec))

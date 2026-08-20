@@ -19,7 +19,7 @@ end
 
 struct ProductVecTransform{TTrf,Trng,D}
     "A collection of vectorisation transforms, one for each component of the product
-    distribution. These may either be `to_vec` or `to_linked_vec` transforms, which in turn
+    distribution. These may either be `to_vec` or `to_unconstrained_vec` transforms, which in turn
     determines the overall behaviour of this transform.
 
     The collection type (e.g. Tuple, Array, or NamedTuple) reflects the underlying structure
@@ -35,7 +35,7 @@ struct ProductVecTransform{TTrf,Trng,D}
 end
 struct ProductVecInvTransform{TTrf,Trng,D}
     "A collection of inverse vectorisation transforms, one for each component of the product
-    distribution. These may either be `from_vec` or `from_linked_vec` transforms, which in
+    distribution. These may either be `from_vec` or `from_unconstrained_vec` transforms, which in
     turn determines the overall behaviour of this transform."
     transforms::TTrf
     "A collection of ranges which specify the input range for each component of the product

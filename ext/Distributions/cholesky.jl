@@ -16,12 +16,12 @@ function VB.vec_length(d::D.LKJCholesky)
     n = first(size(d))
     return div(n * (n + 1), 2)
 end
-VB.from_linked_vec(d::D.LKJCholesky) = VB.inverse(VB.VecCholeskyBijector(d.uplo))
-VB.to_linked_vec(d::D.LKJCholesky) = VB.VecCholeskyBijector(d.uplo)
-function VB.linked_vec_length(d::D.LKJCholesky)
+VB.from_unconstrained_vec(d::D.LKJCholesky) = VB.inverse(VB.VecCholeskyBijector(d.uplo))
+VB.to_unconstrained_vec(d::D.LKJCholesky) = VB.VecCholeskyBijector(d.uplo)
+function VB.unconstrained_vec_length(d::D.LKJCholesky)
     n = first(size(d))
     return div(n * (n - 1), 2)
 end
-function VB.linked_optic_vec(d::D.LKJCholesky)
-    return fill(nothing, VB.linked_vec_length(d))
+function VB.unconstrained_optic_vec(d::D.LKJCholesky)
+    return fill(nothing, VB.unconstrained_vec_length(d))
 end

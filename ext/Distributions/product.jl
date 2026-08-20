@@ -56,11 +56,11 @@ for (product_type, dist_field) in (
                 VB.ProductVecInvTransform,
             )
         end
-        function VB.from_linked_vec(d::$product_type)
+        function VB.from_unconstrained_vec(d::$product_type)
             return VB._make_transform(
                 d.$dist_field,
-                VB.from_linked_vec,
-                VB.linked_vec_length,
+                VB.from_unconstrained_vec,
+                VB.unconstrained_vec_length,
                 VB.ProductVecInvTransform,
             )
         end
@@ -72,21 +72,21 @@ for (product_type, dist_field) in (
                 VB.ProductVecTransform,
             )
         end
-        function VB.to_linked_vec(d::$product_type)
+        function VB.to_unconstrained_vec(d::$product_type)
             return VB._make_transform(
                 d.$dist_field,
-                VB.to_linked_vec,
-                VB.linked_vec_length,
+                VB.to_unconstrained_vec,
+                VB.unconstrained_vec_length,
                 VB.ProductVecTransform,
             )
         end
 
         VB.vec_length(d::$product_type) = sum(VB.vec_length, d.$dist_field)
-        VB.linked_vec_length(d::$product_type) = sum(VB.linked_vec_length, d.$dist_field)
+        VB.unconstrained_vec_length(d::$product_type) = sum(VB.unconstrained_vec_length, d.$dist_field)
     end
 end
 
-for f in (:optic_vec, :linked_optic_vec)
+for f in (:optic_vec, :unconstrained_optic_vec)
     for (product_type, dist_field) in ((D.Product, :v), (D.ProductDistribution, :dists))
         @eval begin
             function VB.$f(d::$product_type)

@@ -123,12 +123,12 @@ heterogeneous_mixtures = [
 
 @testset "Univariates" begin
     for d in univariates
-        Plaice.test_all(d; expected_zero_allocs=(from_vec, from_linked_vec))
+        Plaice.test_all(d; expected_zero_allocs=(from_vec, from_unconstrained_vec))
     end
 
     for d in heterogeneous_mixtures
         expected_zero_allocs = @static if VERSION >= v"1.12-"
-            (from_vec, from_linked_vec)
+            (from_vec, from_unconstrained_vec)
         else
             ()
         end

@@ -32,7 +32,7 @@ adtypes = [
 # end
 
 # These are purposely chosen because the vec_length output is the same but
-# linked_vec_length differs.
+# unconstrained_vec_length differs.
 m2 = MvNormal(zeros(2), I)
 d2 = Dirichlet(ones(2))
 

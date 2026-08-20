@@ -12,10 +12,10 @@ function VB.test_reactant(d)
     x = VB.rand_safe_ad(d)
 
     xvec = VB.to_vec(d)(x)
-    yvec = VB.to_linked_vec(d)(x)
+    yvec = VB.to_unconstrained_vec(d)(x)
 
-    ffwd = VB.to_linked_vec(d) ∘ VB.from_vec(d)
-    frvs = VB.to_vec(d) ∘ VB.from_linked_vec(d)
+    ffwd = VB.to_unconstrained_vec(d) ∘ VB.from_vec(d)
+    frvs = VB.to_vec(d) ∘ VB.from_unconstrained_vec(d)
 
     xvec_r = Reactant.to_rarray(xvec)
     yvec_r = Reactant.to_rarray(yvec)
