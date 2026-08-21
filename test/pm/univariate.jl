@@ -1,4 +1,4 @@
-module VBPMUnivariateTests
+module PlaicePMUnivariateTests
 
 using ProbabilityMeasures
 using Test
@@ -24,4 +24,4 @@ univariates = [PM.Normal(), PM.Exponential(), PM.Uniform(0.0, 1.0)]
     end
 end
 
-end # module VBPMUnivariateTests
+end # module PlaicePMUnivariateTests
