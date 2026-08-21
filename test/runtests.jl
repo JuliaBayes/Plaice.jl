@@ -17,6 +17,8 @@ end
     include("distributions/cholesky.jl")
     include("distributions/order.jl")
     include("distributions/product.jl")
+
+    include("pm/univariate.jl")
 end
 
 end # module PlaiceTests
