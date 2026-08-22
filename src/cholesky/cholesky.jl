@@ -8,7 +8,7 @@ function _get_cartesian_indices(n::Int, uplo::Char)
     end
 end
 
-struct CholeskyVec
+struct CholeskyVec <: AbstractBijector
     n::Int
     uplo::Char
 end
@@ -20,7 +20,7 @@ function with_logabsdet_jacobian(c::CholeskyVec, x::LA.Cholesky{T}) where {T<:Nu
     return (c(x), zero(T))
 end
 
-struct CholeskyUnVec
+struct CholeskyUnVec <: AbstractBijector
     n::Int
     uplo::Char
 end
