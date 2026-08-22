@@ -24,6 +24,9 @@ struct CholeskyUnVec <: AbstractBijector
     n::Int
     uplo::Char
 end
+inverse(c::CholeskyVec) = CholeskyUnVec(c.n, c.uplo)
+inverse(c::CholeskyUnVec) = CholeskyVec(c.n, c.uplo)
+
 function (c::CholeskyUnVec)(xvec::AbstractVector{T}) where {T<:Number}
     x = if c.uplo == 'U'
         LA.Cholesky(LA.UpperTriangular(zeros(T, c.n, c.n)))
