@@ -95,7 +95,8 @@ for f in (:optic_vec, :unconstrained_optic_vec)
                 idxs = Plaice._cartesian_indices(d.$dist_field)
                 for (idx, dist) in zip(idxs, d.$dist_field)
                     this_dist_optics = Plaice.$f(dist)
-                    new_optics = map(optic -> Plaice.append_index(optic, idx), this_dist_optics)
+                    new_optics =
+                        map(optic -> Plaice.append_index(optic, idx), this_dist_optics)
                     optics = vcat(optics, new_optics)
                 end
                 return optics
@@ -108,7 +109,8 @@ for f in (:optic_vec, :unconstrained_optic_vec)
             optics = Union{}[]
             for (nm, dist) in pairs(d.dists)
                 this_dist_optics = Plaice.$f(dist)
-                new_optics = map(optic -> Plaice.prepend_symbol(nm, optic), this_dist_optics)
+                new_optics =
+                    map(optic -> Plaice.prepend_symbol(nm, optic), this_dist_optics)
                 optics = vcat(optics, new_optics)
             end
             return optics

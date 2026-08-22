@@ -31,7 +31,8 @@ end
 # For discrete multivariate distributions, we really can't transform the 'support'.
 Plaice.from_unconstrained_vec(::D.DiscreteMultivariateDistribution) = Plaice.TypedIdentity()
 Plaice.to_unconstrained_vec(::D.DiscreteMultivariateDistribution) = Plaice.TypedIdentity()
-Plaice.unconstrained_vec_length(d::D.DiscreteMultivariateDistribution) = Plaice.vec_length(d)
+Plaice.unconstrained_vec_length(d::D.DiscreteMultivariateDistribution) =
+    Plaice.vec_length(d)
 Plaice.unconstrained_optic_vec(d::D.DiscreteMultivariateDistribution) = Plaice.optic_vec(d)
 
 # MvLogNormal
@@ -42,7 +43,8 @@ Plaice.unconstrained_optic_vec(d::D.AbstractMvLogNormal) = Plaice.optic_vec(d)
 
 # Simplex distributions
 const SIMPLEX_MULTIVARIATES = Union{D.Dirichlet,D.MvLogitNormal}
-Plaice.from_unconstrained_vec(::SIMPLEX_MULTIVARIATES) = Plaice.inverse(Plaice.SimplexBijector())
+Plaice.from_unconstrained_vec(::SIMPLEX_MULTIVARIATES) =
+    Plaice.inverse(Plaice.SimplexBijector())
 Plaice.to_unconstrained_vec(::SIMPLEX_MULTIVARIATES) = Plaice.SimplexBijector()
 Plaice.unconstrained_vec_length(d::SIMPLEX_MULTIVARIATES) = length(d) - 1
 function Plaice.unconstrained_optic_vec(d::SIMPLEX_MULTIVARIATES)

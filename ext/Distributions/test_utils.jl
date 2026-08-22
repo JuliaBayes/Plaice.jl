@@ -3,7 +3,8 @@
 using LinearAlgebra: Cholesky, UpperTriangular, LowerTriangular
 using Test: @test
 
-Plaice.is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} = VS <: D.Continuous
+Plaice.is_continuous(::D.Distribution{<:Any,VS}) where {VS<:D.ValueSupport} =
+    VS <: D.Continuous
 
 Plaice.test_name(d::D.Distribution) = nameof(typeof(d))
 Plaice.test_name(
@@ -12,7 +13,9 @@ Plaice.test_name(
 function Plaice.test_name(d::D.Truncated)
     return "truncated $(Plaice.test_name(d.untruncated)) [$(d.lower),$(d.upper)]"
 end
-function Plaice.test_name(d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:D.Distribution})
+function Plaice.test_name(
+    d::D.ReshapedDistribution{<:Any,<:D.ValueSupport,<:D.Distribution},
+)
     return "reshaped $(Plaice.test_name(d.dist)) to size $(size(d))"
 end
 Plaice.test_name(d::D.OrderStatistic) = "order statistic $(Plaice.test_name(d.dist))"
@@ -38,7 +41,8 @@ Plaice.rand_safe_ad(d::D.Censored) = begin
 end
 
 Plaice.to_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = x -> x[1:(end-1)]
-Plaice.from_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) = y -> vcat(y, 1 - sum(y))
+Plaice.from_vec_for_logjac_test(::Union{D.Dirichlet,D.MvLogitNormal}) =
+    y -> vcat(y, 1 - sum(y))
 function Plaice.to_vec_for_logjac_test(
     d::Union{<:D.ProductDistribution,<:D.ProductNamedTupleDistribution},
 )
@@ -88,7 +92,8 @@ function (c::CholeskyToVecForLogjac)(x::Cholesky{T}) where {T<:Number}
     end
     return xvec
 end
-Plaice.to_vec_for_logjac_test(d::D.LKJCholesky) = CholeskyToVecForLogjac(first(size(d)), d.uplo)
+Plaice.to_vec_for_logjac_test(d::D.LKJCholesky) =
+    CholeskyToVecForLogjac(first(size(d)), d.uplo)
 struct CholeskyFromVecForLogjac
     n::Int
     uplo::Char

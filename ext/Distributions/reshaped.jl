@@ -13,9 +13,14 @@ function Plaice.to_unconstrained_vec(d::D.ReshapedDistribution)
     return Plaice.ReshapeWrapper(size(d), size(d.dist), Plaice.to_unconstrained_vec(d.dist))
 end
 function Plaice.from_unconstrained_vec(d::D.ReshapedDistribution)
-    return Plaice.InvReshapeWrapper(size(d), size(d.dist), Plaice.from_unconstrained_vec(d.dist))
+    return Plaice.InvReshapeWrapper(
+        size(d),
+        size(d.dist),
+        Plaice.from_unconstrained_vec(d.dist),
+    )
 end
-Plaice.unconstrained_vec_length(d::D.ReshapedDistribution) = Plaice.unconstrained_vec_length(d.dist)
+Plaice.unconstrained_vec_length(d::D.ReshapedDistribution) =
+    Plaice.unconstrained_vec_length(d.dist)
 
 # optic_vec requires some care. We can't just reuse the original distribution's optics,
 # i.e., `optic_vec(d) = optic_vec(d.dist)` because the axes may have changed due to

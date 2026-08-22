@@ -16,13 +16,16 @@ function Plaice.to_unconstrained_vec(d::D.JointOrderStatistics)
 end
 Plaice.from_vec(::D.JointOrderStatistics) = Plaice.TypedIdentity()
 function Plaice.from_unconstrained_vec(d::D.JointOrderStatistics)
-    return Plaice.InverseJointOrderWrap(Plaice.inverse(Plaice.scalar_to_scalar_bijector(d.dist)))
+    return Plaice.InverseJointOrderWrap(
+        Plaice.inverse(Plaice.scalar_to_scalar_bijector(d.dist)),
+    )
 end
 # Since D.JointOrderStatistics is a subtype of MultivariateDistribution, we can use the
 # default definitions for vec_length and optic_vec.
 Plaice.unconstrained_vec_length(d::D.JointOrderStatistics) = Plaice.vec_length(d)
 # TODO: Technically, the first element can be @opticof(_[1]) so this is not technically
 # correct.
-Plaice.unconstrained_optic_vec(d::D.JointOrderStatistics) = fill(nothing, Plaice.vec_length(d))
+Plaice.unconstrained_optic_vec(d::D.JointOrderStatistics) =
+    fill(nothing, Plaice.vec_length(d))
 
 Plaice._is_joint_order_statistics(::D.JointOrderStatistics) = true
