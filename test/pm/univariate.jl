@@ -18,14 +18,18 @@ const PM = ProbabilityMeasures
 
 univariates = [
     # Continuous
+    PM.Cauchy(), # iden
     PM.Exponential(), # pos
     PM.Laplace(), # iden
+    PM.LogNormal(), # pos
     PM.Normal(), # iden
     PM.Uniform(0.0, 1.0), # trunc
     # Discrete
     PM.Bernoulli(0.5),
     PM.Binomial(5, 0.5),
     PM.Categorical([0.2, 0.5, 0.3]),
+    PM.Geometric(0.3),
+    PM.Poisson(3.0),
 ]
 
 @testset "PM Univariates" begin

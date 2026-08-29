@@ -16,10 +16,12 @@ function Plaice.optic_vec(d::PM.MvNormal)
 end
 
 # For discrete multivariate distributions, we really can't transform the 'support'.
-#
-# todo discrete multivariate Not defined in PM yet
-#
-# Plaice.from_unconstrained_vec(::PM.DiscreteMultivariateMeasure) = Plaice.TypedIdentity()
-# Plaice.to_unconstrained_vec(::PM.DiscreteMultivariateMeasure) = Plaice.TypedIdentity()
-# Plaice.unconstrained_vec_length(d::PM.DiscreteMultivariateMeasure) = Plaice.vec_length(d)
-# Plaice.unconstrained_optic_vec(d::PM.DiscreteMultivariateMeasure) = Plaice.optic_vec(d)
+Plaice.from_unconstrained_vec(::PM.DiscreteMultivariateMeasure) = Plaice.TypedIdentity()
+Plaice.to_unconstrained_vec(::PM.DiscreteMultivariateMeasure) = Plaice.TypedIdentity()
+Plaice.unconstrained_vec_length(d::PM.DiscreteMultivariateMeasure) = Plaice.vec_length(d)
+Plaice.unconstrained_optic_vec(d::PM.DiscreteMultivariateMeasure) = Plaice.optic_vec(d)
+
+Plaice.vec_length(d::PM.Multinomial) = length(d.p)
+function Plaice.optic_vec(d::PM.Multinomial)
+    return [VarNames.@opticof(_[i]) for i in eachindex(d.p)]
+end

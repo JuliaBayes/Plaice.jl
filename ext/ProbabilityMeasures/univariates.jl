@@ -13,15 +13,14 @@ Plaice.unconstrained_vec_length(::PM.UnivariateMeasure) = 1
 Plaice.optic_vec(::PM.UnivariateMeasure) = [VarNames.Iden()]
 Plaice.unconstrained_optic_vec(::PM.UnivariateMeasure) = [VarNames.Iden()]
 
-# Distributions with support over the entire real line.
-Plaice.scalar_to_scalar_bijector(::PM.Normal) = Plaice.TypedIdentity()
-Plaice.scalar_to_scalar_bijector(::PM.Laplace) = Plaice.TypedIdentity()
+const IDENTITY_UNIVARIATES =
+    Union{PM.Cauchy,PM.Laplace,PM.Normal,PM.DiscreteUnivariateMeasure}
 
-# Discrete distributions cannot usefully be transformed to a continuous support.
-Plaice.scalar_to_scalar_bijector(::PM.DiscreteUnivariateMeasure) = Plaice.TypedIdentity()
+Plaice.scalar_to_scalar_bijector(::IDENTITY_UNIVARIATES) = Plaice.TypedIdentity()
 
-# Distributions with support over the non-negative reals.
-Plaice.scalar_to_scalar_bijector(::PM.Exponential) = Plaice.Log(0.0, 1)
+const POSITIVE_UNIVARIATES = Union{PM.Exponential,PM.LogNormal}
+
+Plaice.scalar_to_scalar_bijector(::POSITIVE_UNIVARIATES) = Plaice.Log(0.0, 1)
 
 # Everything else
 function Plaice.scalar_to_scalar_bijector(d::PM.ContinuousUnivariateMeasure)

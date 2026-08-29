@@ -14,6 +14,7 @@ const PM = ProbabilityMeasures
 multivariates = [
     PM.MvNormal([0.0, 0.0], I),
     PM.MvNormal([1.0, 2.0, 3.0], [2.0 0.0 0.0; -1.0 2.0 0.0; 0.5 -0.5 1.5]),
+    PM.Multinomial(10, [0.2, 0.5, 0.3]),
 ]
 
 @testset "PM Multivariates" begin
