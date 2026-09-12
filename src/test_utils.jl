@@ -339,6 +339,9 @@ function test_allocations(d, expected_zero_allocs=())
     x = rand(d)
     @testset "allocations: $(test_name(d))" begin
         @testset let x = x, d = d
+            # Guard against https://github.com/JuliaLang/julia/issues/63125
+            @test true
+
             if to_vec in expected_zero_allocs
                 ffwd = to_vec(d)
                 ffwd(x)
@@ -354,6 +357,9 @@ function test_allocations(d, expected_zero_allocs=())
     end
     @testset "allocations (unconstrained): $(test_name(d))" begin
         @testset let x = x, d = d
+            # Guard against https://github.com/JuliaLang/julia/issues/63125
+            @test true
+
             if to_unconstrained_vec in expected_zero_allocs
                 ffwd = to_unconstrained_vec(d)
                 ffwd(x)
