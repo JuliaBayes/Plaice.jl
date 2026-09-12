@@ -1,6 +1,6 @@
 name = "Plaice"
 uuid = "55802ec2-189d-45e6-a786-b4d97e4775f1"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Penelope Yong <penelopeysm@gmail.com>"]
 
 [deps]
