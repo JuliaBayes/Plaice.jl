@@ -38,6 +38,17 @@ matrix_dists = [
 ]
 
 @testset "Matrix distributions" begin
+    @testset "Positive definite coordinates" begin
+        d = Wishart(5, Matrix{Float64}(I, 3, 3))
+        x = [4 2 0; 2 10 3; 0 3 5]
+        y = [log(2), 1, log(3), 0, 1, log(2)]
+        logjac = 9log(2) + 3log(3)
+        result, result_logjac = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
+        @test result ≈ y
+        @test logabsdet_jacobian(to_unconstrained_vec(d), x) ≈ result_logjac ≈ -logjac
+        @test logabsdet_jacobian(from_unconstrained_vec(d), y) ≈ logjac
+    end
+
     @testset "Correlation inverse Jacobian at large coordinates" begin
         f = from_unconstrained_vec(LKJ(3, 1.0))
         y = [800.0, 0.0, 0.0]
