@@ -13,12 +13,26 @@ struct CholeskyVec <: AbstractBijector
     uplo::Char
 end
 function (c::CholeskyVec)(x::LA.Cholesky)
-    cartesian_indices = _get_cartesian_indices(c.n, c.uplo)
-    return [x.UL[i, j] for (i, j) in cartesian_indices]
+    factors = x.UL
+    y = similar(x.factors, div(c.n * (c.n + 1), 2))
+    idx = 1
+    for j in 1:c.n
+        rows = if c.uplo == 'U'
+            1:j
+        else
+            j:c.n
+        end
+        for i in rows
+            y[idx] = factors[i, j]
+            idx += 1
+        end
+    end
+    return y
 end
 function with_logabsdet_jacobian(c::CholeskyVec, x::LA.Cholesky{T}) where {T<:Number}
     return (c(x), zero(T))
 end
+logabsdet_jacobian(::CholeskyVec, ::LA.Cholesky{T}) where {T<:Number} = zero(T)
 
 struct CholeskyUnVec <: AbstractBijector
     n::Int
@@ -28,17 +42,23 @@ inverse(c::CholeskyVec) = CholeskyUnVec(c.n, c.uplo)
 inverse(c::CholeskyUnVec) = CholeskyVec(c.n, c.uplo)
 
 function (c::CholeskyUnVec)(xvec::AbstractVector{T}) where {T<:Number}
-    x = if c.uplo == 'U'
-        LA.Cholesky(LA.UpperTriangular(zeros(T, c.n, c.n)))
-    else
-        LA.Cholesky(LA.LowerTriangular(zeros(T, c.n, c.n)))
+    factors = similar(xvec, c.n, c.n)
+    fill!(factors, zero(T))
+    idx = 1
+    for j in 1:c.n
+        rows = if c.uplo == 'U'
+            1:j
+        else
+            j:c.n
+        end
+        for i in rows
+            factors[i, j] = xvec[idx]
+            idx += 1
+        end
     end
-    cartesian_indices = _get_cartesian_indices(c.n, c.uplo)
-    for (idx, (i, j)) in enumerate(cartesian_indices)
-        x.UL[i, j] = xvec[idx]
-    end
-    return x
+    return LA.Cholesky(factors, c.uplo, 0)
 end
 function with_logabsdet_jacobian(c::CholeskyUnVec, x::AbstractVector{T}) where {T<:Number}
     return (c(x), zero(T))
 end
+logabsdet_jacobian(::CholeskyUnVec, ::AbstractVector{T}) where {T<:Number} = zero(T)
