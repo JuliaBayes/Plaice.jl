@@ -1,9 +1,4 @@
-# Distributions over positive (semi)definite matrices.
-#
-# We could in principle just use PDVecBijector, which does the same thing as this
-# reimplemented version. However, (1) PDVecBijector has a slightly convoluted definition,
-# and this one is probably faster; (2) ReverseDiff chokes on PDVecBijector:
-# https://github.com/TuringLang/Bijectors.jl/issues/432
+# Distributions over positive definite matrices.
 
 import LinearAlgebra as LA
 import IrrationalConstants: logtwo
@@ -15,10 +10,10 @@ function with_logabsdet_jacobian(p::PosDef, x::AbstractMatrix{T}) where {T<:Numb
     Base.require_one_based_indexing(x)
     LA.checksquare(x)
     d = p.original_size
-    yvec = zeros(T, div(d * (d + 1), 2))
-    L = LA.cholesky(LA.Hermitian(x, :L)).L
+    L = cholesky_lower(x)
+    yvec = similar(L, div(d * (d + 1), 2))
     idx = 1
-    z = zero(T)
+    z = zero(eltype(L))
     weight = d + 1
     for i in 1:d
         for j in 1:i
@@ -38,28 +33,48 @@ function with_logabsdet_jacobian(p::PosDef, x::AbstractMatrix{T}) where {T<:Numb
 end
 inverse(p::PosDef) = InvPosDef(p.original_size)
 
+function logabsdet_jacobian(p::PosDef, x::AbstractMatrix{T}) where {T<:Number}
+    L = cholesky_lower(x)
+    d = p.original_size
+    z = zero(eltype(L))
+    for i in 1:d
+        z -= (d + 2 - i) * log(L[i, i])
+    end
+    return z - (d * oftype(z, logtwo))
+end
+
 struct InvPosDef <: AbstractBijector
     original_size::Int
 end
 function with_logabsdet_jacobian(ip::InvPosDef, yvec::AbstractVector{T}) where {T<:Number}
     d = ip.original_size
-    X = zeros(T, d, d)
-    idx = 1
-    z = zero(T)
+    X = similar(yvec, float(T), d, d)
+    z = zero(eltype(X))
     weight = d + 1
-    for i in 1:d
-        for j in 1:i
-            if i == j
-                X[i, j] = exp(yvec[idx])
-                z += weight * yvec[idx]
-                weight -= 1
-            else
-                X[i, j] = yvec[idx]
-            end
-            idx += 1
+    for j in 1:d
+        for i in 1:(j-1)
+            X[i, j] = 0
+        end
+        # Coordinates use lower-triangle row order; matrix writes follow columns.
+        idx = div(j * (j + 1), 2)
+        X[j, j] = exp(yvec[idx])
+        z += weight * yvec[idx]
+        weight -= 1
+        for i in (j+1):d
+            idx += i - 1
+            X[i, j] = yvec[idx]
         end
     end
     logjac = z + (d * oftype(z, logtwo))
     return X * X', logjac
 end
 inverse(ip::InvPosDef) = PosDef(ip.original_size)
+
+function logabsdet_jacobian(ip::InvPosDef, yvec::AbstractVector{T}) where {T<:Number}
+    d = ip.original_size
+    logjac = d * convert(float(T), logtwo)
+    for i in 1:d
+        logjac += (d + 2 - i) * yvec[div(i * (i + 1), 2)]
+    end
+    return logjac
+end
