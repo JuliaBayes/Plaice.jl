@@ -23,10 +23,13 @@ dists = [
     # DifferentiationInterface trips up with empty vectors.
     LKJCholesky(3, 1.0, 'U'),
     LKJCholesky(3, 1.0, 'L'),
+    LKJCholesky(5, 1.0, 'U'),
+    LKJCholesky(5, 1.0, 'L'),
 ]
 
 @testset "Cholesky" begin
     @testset "Factor coordinates" begin
+        # Unit rows give analytic coordinates and a Jacobian, including zero entries.
         L = Float32[1 0 0 0; 3/5 4/5 0 0; 0 5/13 12/13 0; 0 0 8/17 15/17]
         y = Float32[atanh(3/5), 0, asinh(5/12), 0, 0, asinh(8/15)]
         logjac = -2 * (log(5/4) + log(13/12) + log(17/15))

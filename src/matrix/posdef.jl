@@ -72,7 +72,7 @@ inverse(ip::InvPosDef) = PosDef(ip.original_size)
 
 function logabsdet_jacobian(ip::InvPosDef, yvec::AbstractVector{T}) where {T<:Number}
     d = ip.original_size
-    logjac = d * oftype(zero(float(T)), logtwo)
+    logjac = d * convert(float(T), logtwo)
     for i in 1:d
         logjac += (d + 2 - i) * yvec[div(i * (i + 1), 2)]
     end

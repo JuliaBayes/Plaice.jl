@@ -22,9 +22,8 @@ function Plaice.vec_length(d::D.LKJCholesky)
     return div(n * (n + 1), 2)
 end
 Plaice.from_unconstrained_vec(d::D.LKJCholesky) =
-    Plaice.inverse(Plaice.VecCholeskyBijector(_cholesky_uplo(d)))
-Plaice.to_unconstrained_vec(d::D.LKJCholesky) =
-    Plaice.VecCholeskyBijector(_cholesky_uplo(d))
+    Plaice.inverse(Plaice.CorrCholesky(_cholesky_uplo(d)))
+Plaice.to_unconstrained_vec(d::D.LKJCholesky) = Plaice.CorrCholesky(_cholesky_uplo(d))
 function Plaice.unconstrained_vec_length(d::D.LKJCholesky)
     n = first(size(d))
     return div(n * (n - 1), 2)

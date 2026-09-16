@@ -31,10 +31,14 @@ test_in_support(d) = !(d isa LKJ)
 
 matrix_dists = [
     MatrixNormal(2, 4),
+    MatrixNormal(3, 5),
     MatrixTDist(ν, M, Σ, Ω),
+    Wishart(7, Matrix{Float64}(I, 2, 2)),
     Wishart(7, Matrix{Float64}(I, 4, 4)),
     InverseWishart(7, Matrix{Float64}(I, 2, 2)),
+    InverseWishart(7, Matrix{Float64}(I, 4, 4)),
     LKJ(3, 1.0),
+    LKJ(7, 1.0),
 ]
 
 @testset "Matrix distributions" begin

@@ -2,21 +2,21 @@ using LinearAlgebra: LinearAlgebra as LA
 using LogExpFunctions: logcosh
 
 """
-    VecCorrBijector
+    Corr
 
 A bijector to transform a correlation matrix to an unconstrained vector.
 
 # Reference
 https://mc-stan.org/docs/reference-manual/transforms.html#correlation-matrices
 """
-struct VecCorrBijector <: AbstractBijector end
+struct Corr <: AbstractBijector end
 
-struct InverseVecCorrBijector <: AbstractBijector end
-inverse(::VecCorrBijector) = InverseVecCorrBijector()
-inverse(::InverseVecCorrBijector) = VecCorrBijector()
+struct InvCorr <: AbstractBijector end
+inverse(::Corr) = InvCorr()
+inverse(::InvCorr) = Corr()
 
 """
-    VecCholeskyBijector(uplo)
+    CorrCholesky(uplo)
 
 A bijector to transform a Cholesky factor of a correlation matrix to an unconstrained vector.
 `uplo` selects the upper (`:U` or `'U'`) or lower (`:L` or `'L'`) factor.
@@ -24,9 +24,9 @@ A bijector to transform a Cholesky factor of a correlation matrix to an unconstr
 # Reference
 https://mc-stan.org/docs/reference-manual/transforms.html#cholesky-factors-of-correlation-matrices
 """
-struct VecCholeskyBijector <: AbstractBijector
+struct CorrCholesky <: AbstractBijector
     mode::Symbol
-    function VecCholeskyBijector(uplo)
+    function CorrCholesky(uplo)
         s = Symbol(uplo)
         if (s === :U) || (s === :L)
             new(s)
@@ -40,11 +40,13 @@ struct VecCholeskyBijector <: AbstractBijector
     end
 end
 
-struct InverseVecCholeskyBijector <: AbstractBijector
+struct InvCorrCholesky <: AbstractBijector
     mode::Symbol
+    InvCorrCholesky(b::CorrCholesky) = new(b.mode)
 end
-inverse(b::VecCholeskyBijector) = InverseVecCholeskyBijector(b.mode)
-inverse(b::InverseVecCholeskyBijector) = VecCholeskyBijector(b.mode)
+InvCorrCholesky(uplo) = InvCorrCholesky(CorrCholesky(uplo))
+inverse(b::CorrCholesky) = InvCorrCholesky(b)
+inverse(b::InvCorrCholesky) = CorrCholesky(b.mode)
 
 _triu1_dim_from_length(d) = (1 + isqrt(1 + 8d)) ÷ 2
 
@@ -67,8 +69,8 @@ function _link_chol_lkj_from_upper(W::AbstractMatrix)
     return y
 end
 
-(::VecCorrBijector)(X) = _link_chol_lkj_from_upper(cholesky_upper(X))
-function (b::VecCholeskyBijector)(X)
+(::Corr)(X) = _link_chol_lkj_from_upper(cholesky_upper(X))
+function (b::CorrCholesky)(X)
     W = if b.mode === :U
         cholesky_upper(X)
     else
@@ -77,19 +79,16 @@ function (b::VecCholeskyBijector)(X)
     return _link_chol_lkj_from_upper(W)
 end
 
-function with_logabsdet_jacobian(b::Union{VecCorrBijector,VecCholeskyBijector}, x)
+function with_logabsdet_jacobian(b::Union{Corr,CorrCholesky}, x)
     y = b(x)
     return y, -logabsdet_jacobian(inverse(b), y)
 end
 
 # The factor and correlation matrix use different independent coordinates.
-_lkj_logjac_weight(::InverseVecCholeskyBijector, K, i, j) = j - i + 1
-_lkj_logjac_weight(::InverseVecCorrBijector, K, i, j) = K - i + 1
+_lkj_logjac_weight(::InvCorrCholesky, K, i, j) = j - i + 1
+_lkj_logjac_weight(::InvCorr, K, i, j) = K - i + 1
 
-function logabsdet_jacobian(
-    b::Union{InverseVecCorrBijector,InverseVecCholeskyBijector},
-    y::AbstractVector,
-)
+function logabsdet_jacobian(b::Union{InvCorr,InvCorrCholesky}, y::AbstractVector)
     Base.require_one_based_indexing(y)
     K = _triu1_dim_from_length(length(y))
     logjac = zero(float(eltype(y)))
@@ -102,10 +101,10 @@ function logabsdet_jacobian(
 end
 
 # Avoid recording multiplication by the factor's unit weight during differentiation.
-_lkj_logjac_column(::InverseVecCholeskyBijector, K, j, remainder) = remainder
-_lkj_logjac_column(::InverseVecCorrBijector, K, j, remainder) = (K - j + 1) * remainder
+_lkj_logjac_column(::InvCorrCholesky, K, j, remainder) = remainder
+_lkj_logjac_column(::InvCorr, K, j, remainder) = (K - j + 1) * remainder
 
-function _inv_link_chol_lkj(y, b)
+function _inv_link_chol_lkj(y::AbstractVector, b::Union{InvCorr,InvCorrCholesky})
     K = _triu1_dim_from_length(length(y))
     W = similar(y, float(eltype(y)), K, K)
     logjac = zero(eltype(W))
@@ -131,16 +130,17 @@ function _inv_link_chol_lkj(y, b)
     return W, logjac
 end
 
-function with_logabsdet_jacobian(b::InverseVecCorrBijector, y::AbstractVector)
+function with_logabsdet_jacobian(b::InvCorr, y::AbstractVector)
     Base.require_one_based_indexing(y)
     U, logjac = _inv_link_chol_lkj(y, b)
     return U' * U, logjac
 end
 
-function with_logabsdet_jacobian(b::InverseVecCholeskyBijector, y::AbstractVector)
+function with_logabsdet_jacobian(b::InvCorrCholesky, y::AbstractVector)
     Base.require_one_based_indexing(y)
     factors, logjac = _inv_link_chol_lkj(y, b)
-    # Contiguous writes give faster Enzyme gradients than writing through a transpose.
+    # Fill columns with adjacent writes, then transpose once for a lower factor.
+    # This gives faster Enzyme gradients than filling the lower factor by rows.
     if b.mode === :U
         return LA.Cholesky(factors, :U, 0), logjac
     else

@@ -36,10 +36,10 @@ Plaice.unconstrained_optic_vec(d::PDMatrixDistribution) =
 
 # LKJ correlation matrices.
 #
-# TODO(penelopeysm) VecCorrBijector has a few bugs. Look at the issue tracker.
+# TODO(penelopeysm) Corr has a few bugs. Look at the issue tracker.
 
-Plaice.from_unconstrained_vec(::D.LKJ) = Plaice.inverse(Plaice.VecCorrBijector())
-Plaice.to_unconstrained_vec(::D.LKJ) = Plaice.VecCorrBijector()
+Plaice.from_unconstrained_vec(::D.LKJ) = Plaice.inverse(Plaice.Corr())
+Plaice.to_unconstrained_vec(::D.LKJ) = Plaice.Corr()
 function Plaice.unconstrained_vec_length(d::D.LKJ)
     n = first(size(d))
     return div(n * (n - 1), 2)
