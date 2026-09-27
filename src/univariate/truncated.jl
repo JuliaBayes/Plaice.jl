@@ -88,7 +88,7 @@ function with_logabsdet_jacobian(u::Untruncate, x::Number)
     # This conditional needs some care: if we change the structure to `if lbounded &&
     # ubounded ...` then it runs into https://github.com/EnzymeAD/Enzyme.jl/issues/3679
     # on 1.10.
-    # 
+    #
     # That's a failure with Enzyme.jacobian rather than Enzyme.gradient, so it's unlikely
     # that it will really be hit in practice. But it's still worth being careful here
     return if lbounded
