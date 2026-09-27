@@ -142,7 +142,8 @@ heterogeneous_mixtures = [
         @test Plaice.with_logabsdet_jacobian(t, -Inf) == (0.2, -Inf)
         # Precision close to the bounds, compared against BigFloat
         u = Plaice.Untruncate(0.2, 0.8)
-        for x in (prevfloat(0.8), prevfloat(0.8, 1000), nextfloat(0.2), nextfloat(0.2, 1000))
+        for x in
+            (prevfloat(0.8), prevfloat(0.8, 1000), nextfloat(0.2), nextfloat(0.2, 1000))
             y, logjac = Plaice.with_logabsdet_jacobian(u, x)
             X = big(x)
             @test y ≈ log(X - 0.2) - log(0.8 - X)
