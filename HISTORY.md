@@ -1,6 +1,6 @@
 # 0.1.3
 
-Improve numerical stability of `Untruncate`.
+Improve numerical stability of `Truncate` and `Untruncate`.
 
 # 0.1.2
 
