@@ -1,3 +1,7 @@
+# 0.1.3
+
+Improve numerical stability of `Untruncate`.
+
 # 0.1.2
 
 (Substantially) improve the performance of matrix and Cholesky bijectors.

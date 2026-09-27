@@ -6,7 +6,7 @@
 # infinite is the same as `TypedIdentity`, and the case where only the upper bound is
 # infinite is the same as `Exp` and `Log`.
 
-using LogExpFunctions: logit, logistic, log1pexp
+using LogExpFunctions: logistic, log1pexp
 
 """
     Truncate(a, b) <: ScalarToScalarBijector
@@ -37,11 +37,11 @@ function with_logabsdet_jacobian(t::Truncate, y::Number)
     return if lbounded && ubounded
         bma = t.upper - t.lower
         res = (bma * logistic(y)) + t.lower
-        # Bijectors uses this:
-        #    absy = abs(y)
-        #    return log(bma) - absy - (2 * log1pexp(-absy))
-        # but I checked and this is not any more numerically stable.
-        logjac = log(bma) + y - (2 * log1pexp(y))
+        # This is the same as `log(bma) + y - (2 * log1pexp(y))`, but that form gives
+        # `Inf - Inf = NaN` at `y = Inf`, whereas this one correctly gives `-Inf`. It is
+        # also slightly more accurate for large positive `y`.
+        absy = abs(y)
+        logjac = log(bma) - absy - (2 * log1pexp(-absy))
         res, logjac
     elseif lbounded
         exp(y) + t.lower, y
@@ -74,7 +74,7 @@ is_monotonically_decreasing(t::Untruncate) = !isfinite(t.lower) && isfinite(t.up
 function (u::Untruncate)(x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
     return if lbounded && ubounded
-        logit((x - u.lower) / (u.upper - u.lower))
+        log(x - u.lower) - log(u.upper - x)
     elseif lbounded
         log(x - u.lower)
     elseif ubounded
@@ -86,10 +86,12 @@ end
 function with_logabsdet_jacobian(u::Untruncate, x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
     return if lbounded && ubounded
-        bma = u.upper - u.lower
-        xma = x - u.lower
-        xma_over_bma = xma / bma
-        logit(xma_over_bma), -log(xma_over_bma * (u.upper - x))
+        # We could compute `logit((x - a) / (b - a))`, but when `x` is close to `b`, the
+        # rounding error in `(x - a) / (b - a)` gets magnified when `logit` computes
+        # `1 - (x - a) / (b - a)`. Calculating `b - x` directly avoids this.
+        log_xma = log(x - u.lower)
+        log_bmx = log(u.upper - x)
+        log_xma - log_bmx, log(u.upper - u.lower) - log_xma - log_bmx
     elseif lbounded
         log_xma = log(x - u.lower)
         log_xma, -log_xma

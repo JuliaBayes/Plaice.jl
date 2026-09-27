@@ -134,6 +134,22 @@ heterogeneous_mixtures = [
         end
         Plaice.test_all(d; expected_zero_allocs=expected_zero_allocs)
     end
+
+    @testset "Truncate/Untruncate numerical edge cases" begin
+        # https://github.com/JuliaBayes/Plaice.jl/issues/24
+        t = Plaice.Truncate(0.2, 0.8)
+        @test Plaice.with_logabsdet_jacobian(t, Inf) == (0.8, -Inf)
+        @test Plaice.with_logabsdet_jacobian(t, -Inf) == (0.2, -Inf)
+        # Precision close to the bounds, compared against BigFloat
+        u = Plaice.Untruncate(0.2, 0.8)
+        for x in (prevfloat(0.8), prevfloat(0.8, 1000), nextfloat(0.2), nextfloat(0.2, 1000))
+            y, logjac = Plaice.with_logabsdet_jacobian(u, x)
+            X = big(x)
+            @test y ≈ log(X - 0.2) - log(0.8 - X)
+            @test logjac ≈ log(big(0.8) - 0.2) - log(X - 0.2) - log(0.8 - X)
+            @test u(x) == y
+        end
+    end
 end
 
 end # module PlaiceUnivariateTests
