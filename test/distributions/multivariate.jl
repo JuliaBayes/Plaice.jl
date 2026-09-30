@@ -25,6 +25,16 @@ multivariates = [
 ]
 
 @testset "Multivariates" begin
+    @testset "Float32 simplex" begin
+        d = Dirichlet(Float32[2, 3, 5])
+        x = Float32[0.25, 0.25, 0.5]
+        y, logjac = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
+        xnew, inv_logjac = with_logabsdet_jacobian(from_unconstrained_vec(d), y)
+        @test eltype(y) === eltype(xnew) === Float32
+        @test typeof(logjac) === typeof(inv_logjac) === Float32
+        @test xnew ≈ x
+    end
+
     for d in multivariates
         expected_zero_allocs = if d isa Union{Dirichlet,MvLogitNormal,MvLogNormal}
             (to_vec, from_vec)
