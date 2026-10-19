@@ -35,13 +35,29 @@ multivariates = [
                 xnew = inverse(b)(y)
                 @test all(isfinite, y)
                 @test all(isapprox.(xnew, xs))
-                # Drop the largest coordinate to keep the sparse Jacobian well scaled.
                 jac = ForwardDiff.jacobian(
-                    t -> vec(inverse(b)(reshape(t, size(y))))[2:end],
+                    t -> vec(inverse(b)(reshape(t, size(y))))[1:(end-1)],
                     vec(y),
                 )
                 @test logjac ≈ -first(logabsdet(jac))
             end
+        end
+    end
+
+    @testset "Cached simplex gradients" begin
+        d = Dirichlet(ones(Float32, 2))
+        b = to_unconstrained_vec(d)
+        f = x -> only(b(x))
+        tape = ReverseDiff.compile(ReverseDiff.GradientTape(f, Float32[0.5, 0.5]))
+        for x in (Float32[1, 1.0f-40], Float32[1.0f-40, 1])
+            grad = ReverseDiff.gradient!(zeros(Float32, 2), tape, x)
+            @test all(isapprox.(grad, [inv(x[1]), -inv(x[2])]))
+        end
+        g = y -> sum(abs2, inverse(b)(y))
+        tape = ReverseDiff.compile(ReverseDiff.GradientTape(g, Float32[1]))
+        for y in (Float32[-90], Float32[0], Float32[90])
+            grad = ReverseDiff.gradient!(zeros(Float32, 1), tape, y)
+            @test all(isapprox.(grad, ForwardDiff.gradient(g, y)))
         end
     end
 
