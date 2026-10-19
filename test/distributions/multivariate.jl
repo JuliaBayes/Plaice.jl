@@ -25,6 +25,26 @@ multivariates = [
 ]
 
 @testset "Multivariates" begin
+    @testset "Sparse simplex" begin
+        for T in (Float32, Float64)
+            x = T[0.5, prevfloat(T(0.5)), eps(T)/4, eps(T)^3]
+            b = to_unconstrained_vec(Dirichlet(ones(T, 4)))
+            # The prefix rounds to one, but the remaining mass is positive.
+            for xs in (x, reshape(x, :, 1))
+                y, logjac = with_logabsdet_jacobian(b, xs)
+                xnew = inverse(b)(y)
+                @test all(isfinite, y)
+                @test all(isapprox.(xnew, xs))
+                # Drop the largest coordinate to keep the sparse Jacobian well scaled.
+                jac = ForwardDiff.jacobian(
+                    t -> vec(inverse(b)(reshape(t, size(y))))[2:end],
+                    vec(y),
+                )
+                @test logjac ≈ -first(logabsdet(jac))
+            end
+        end
+    end
+
     @testset "Float32 simplex" begin
         d = Dirichlet(Float32[2, 3, 5])
         x = Float32[0.25, 0.25, 0.5]
