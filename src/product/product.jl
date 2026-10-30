@@ -186,7 +186,16 @@ end
     for (nm, y_nm, lj_nm) in zip(names, vcat_args, lj_args)
         push!(exprs, :(($y_nm, $lj_nm) = with_logabsdet_jacobian(t.transforms.$nm, x.$nm)))
     end
-    push!(exprs, :(return (vcat($(vcat_args...)), +($(lj_args...)))))
+    push!(exprs, quote
+        # Avoid Enzyme's inactive-allocation assertion when only the log-Jacobian is used.
+        # https://github.com/EnzymeAD/Enzyme/issues/3504
+        y = if EC.within_autodiff()
+            @inline vcat($(vcat_args...))
+        else
+            vcat($(vcat_args...))
+        end
+        return y, +($(lj_args...))
+    end)
     return Expr(:block, exprs...)
 end
 @generated function (t::ProductVecTransform{<:NamedTuple{names}})(
