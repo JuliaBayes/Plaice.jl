@@ -86,6 +86,16 @@ Additionally, if your distribution is likely to be used in part of a product dis
 Plaice.has_constant_vec_bijector
 ```
 
+## Product bijector building blocks
+
+Use these constructors and optic helpers when implementing vector bijectors for product distributions.
+
+```@docs
+Plaice.ProductVecTransform
+Plaice.Elementwise
+Plaice.append_index
+```
+
 ## Univariate distributions
 
 For univariate distributions the default definition is to generate a bijector that inspects the minimum and maximum of the distribution.

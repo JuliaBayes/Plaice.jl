@@ -1,3 +1,9 @@
+# 0.1.4
+
+Declare and document `ProductVecTransform`, `Elementwise`, and `append_index` as public API for downstream product bijector implementations.
+Add Compat for public declarations while keeping Julia 1.10 support.
+Fix tuple indices in `append_index` to match its documented behavior.
+
 # 0.1.3
 
 Improve numerical stability of `Truncate` and `Untruncate`.

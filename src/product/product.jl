@@ -17,6 +17,25 @@ _map_inverse(t::AbstractArray) = inverse.(t)
     return expr
 end
 
+"""
+    ProductVecTransform(transforms, ranges, base_size)
+
+Combine component vectorisation bijectors into one bijector. `transforms` and `ranges`
+have matching tuple, array, or named-tuple structures. For tuple and array products,
+`base_size` is the original size of each component, and `ranges` selects each component's
+coordinates in the output vector.
+Ranges must partition the output vector without gaps or overlaps and match the component
+output lengths. For named tuples, ranges follow field order and `base_size` is unused.
+
+For repeated components, pass `Elementwise(bijector, dims)` as `transforms` and
+`nothing` as `ranges`. Input dimensions are `(base_size..., dims...)`, with components in
+column-major order. Empty multivariate products are not supported.
+For scalar components (`base_size == ()`), the repeated bijector must map scalars to
+scalars, as provided by `scalar_to_scalar_bijector`.
+
+Use `inverse` for the inverse bijector and `with_logabsdet_jacobian` to
+transform values and sum the component log-Jacobians.
+"""
 struct ProductVecTransform{TTrf,Trng,D} <: AbstractBijector
     "A collection of vectorisation transforms, one for each component of the product
     distribution. These may either be `to_vec` or `to_unconstrained_vec` transforms, which in turn
@@ -366,6 +385,8 @@ function _make_transform(
 end
 
 """
+    append_index(optic, i)
+
 Add extra indices to the end of an optic.
 
 For example, if `i` is `(1, 2)`, this does
@@ -376,12 +397,15 @@ x.a  ->  x.a[1, 2]
 x[3] ->  x[3, 1, 2]
 ```
 """
-append_index(::Nothing, i) = nothing
-append_index(::VarNames.Iden, i) = @opticof(_[i])
-function append_index(p::VarNames.Property{sym}, i) where {sym}
+append_index(optic, i) = _append_index(optic, i)
+append_index(optic, indices::Tuple) = foldl(append_index, indices; init=optic)
+
+_append_index(::Nothing, i) = nothing
+_append_index(::VarNames.Iden, i) = @opticof(_[i])
+function _append_index(p::VarNames.Property{sym}, i) where {sym}
     return VarNames.Property{sym}(append_index(p.child, i))
 end
-function append_index(p::VarNames.Index, i)
+function _append_index(p::VarNames.Index, i)
     return if p.child isa VarNames.Iden
         VarNames.Index((p.ix..., i), p.kw, p.child)
     else

@@ -1,5 +1,6 @@
 module Plaice
 
+using Compat: @compat
 using VarNames: VarNames, @opticof
 import ChangesOfVariables: with_logabsdet_jacobian
 import InverseFunctions: inverse
@@ -22,6 +23,7 @@ export is_monotonically_increasing
 export is_monotonically_decreasing
 export AbstractBijector
 export TypedIdentity, Log, Untruncate
+@compat public ProductVecTransform, Elementwise, append_index
 # re-exports
 export with_logabsdet_jacobian
 export logabsdet_jacobian
