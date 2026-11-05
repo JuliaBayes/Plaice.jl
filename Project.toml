@@ -5,7 +5,6 @@ authors = ["Penelope Yong <penelopeysm@gmail.com> and contributors"]
 
 [deps]
 ChangesOfVariables = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
-Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 EnzymeCore = "f151be2c-9106-41f4-ab19-57ee4f262869"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
@@ -27,7 +26,6 @@ PlaiceReactantExt = ["Enzyme", "Reactant", "Test"]
 
 [compat]
 ChangesOfVariables = "0.1"
-Compat = "4.10"
 DifferentiationInterface = "0.7"
 Distributions = "0.25"
 Enzyme = "0.13"

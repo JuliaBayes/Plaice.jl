@@ -88,12 +88,11 @@ Plaice.has_constant_vec_bijector
 
 ## Product bijector building blocks
 
-Use these constructors and optic helpers when implementing vector bijectors for product distributions.
+Use these constructors when implementing vector bijectors for product distributions.
 
 ```@docs
 Plaice.ProductVecTransform
 Plaice.Elementwise
-Plaice.append_index
 ```
 
 ## Univariate distributions
