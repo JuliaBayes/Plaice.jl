@@ -1,7 +1,8 @@
 # 0.1.4
 
 Declare and document `ProductVecTransform` and `Elementwise` as public API for downstream product bijector implementations.
-Fix tuple indices in `append_index` to match its documented behavior.
+
+Fix a bug with Enzyme on named product distribution bijectors.
 
 # 0.1.3
 
