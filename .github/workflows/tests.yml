@@ -53,6 +53,10 @@ jobs:
 
       - uses: julia-actions/cache@a7bed9df697e5d7309d68afe7542a87621a8b6c8 # 3.3.0
 
+      - name: Resolve optional Reactant test dependency
+        if: runner.os != 'Windows'
+        run: julia --project -e 'using Pkg; Pkg.add("Reactant")'
+
       - uses: julia-actions/julia-runtest@6e050c8013b833b1195105ff2fce9cd802f53271 # 1.12.0
         env:
           # Only run Aqua tests on latest version
