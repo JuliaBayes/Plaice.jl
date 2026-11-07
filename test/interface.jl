@@ -2,6 +2,7 @@ module PlaiceInterfaceTests
 
 using Plaice
 using Test
+using VarNames: @opticof
 
 struct TestExp <: Plaice.AbstractBijector end
 struct TestLog <: Plaice.AbstractBijector end
@@ -29,6 +30,14 @@ Plaice.inverse(::TestLog) = TestExp()
     @test ib isa TestLog
     @test inverse(ib) isa TestExp
     @test ib(b(x)) ≈ x
+end
+
+@testset "append tuple indices" begin
+    A = reshape(1:6, 2, 3)
+    B = reshape(1:24, 4, 2, 3)
+    @test Plaice.append_index(@opticof(_), (1, 2))(A) == A[1, 2]
+    @test Plaice.append_index(@opticof(_.a), (1, 2))((; a=A)) == A[1, 2]
+    @test Plaice.append_index(@opticof(_[3]), (1, 2))(B) == B[3, 1, 2]
 end
 
 end # module PlaiceInterfaceTests

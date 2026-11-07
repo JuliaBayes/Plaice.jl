@@ -1,3 +1,8 @@
+# 0.1.4
+
+Declare and document `ProductVecTransform` and `Elementwise` as public API for downstream product bijector implementations.
+Fix tuple indices in `append_index` to match its documented behavior.
+
 # 0.1.3
 
 Improve numerical stability of `Truncate` and `Untruncate`.
