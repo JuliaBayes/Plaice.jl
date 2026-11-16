@@ -18,6 +18,9 @@ end
     include("distributions/cholesky.jl")
     include("distributions/order.jl")
     include("distributions/product.jl")
+    if !Sys.iswindows()
+        include("reactant.jl")
+    end
 end
 
 end # module PlaiceTests
