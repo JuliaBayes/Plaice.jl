@@ -25,6 +25,42 @@ multivariates = [
 ]
 
 @testset "Multivariates" begin
+    @testset "Sparse simplex" begin
+        for T in (Float32, Float64)
+            x = T[0.5, prevfloat(T(0.5)), eps(T)/4, eps(T)^3]
+            b = to_unconstrained_vec(Dirichlet(ones(T, 4)))
+            # The prefix rounds to one, but the remaining mass is positive.
+            for xs in (x, reshape(x, :, 1))
+                y, logjac = with_logabsdet_jacobian(b, xs)
+                xnew = inverse(b)(y)
+                @test all(isfinite, y)
+                @test all(isapprox.(xnew, xs))
+                jac = ForwardDiff.jacobian(
+                    t -> vec(inverse(b)(reshape(t, size(y))))[1:(end-1)],
+                    vec(y),
+                )
+                @test logjac ≈ -first(logabsdet(jac))
+            end
+        end
+    end
+
+    @testset "Cached simplex gradients" begin
+        d = Dirichlet(ones(Float32, 2))
+        b = to_unconstrained_vec(d)
+        f = x -> only(b(x))
+        tape = ReverseDiff.compile(ReverseDiff.GradientTape(f, Float32[0.5, 0.5]))
+        for x in (Float32[1, 1.0f-40], Float32[1.0f-40, 1])
+            grad = ReverseDiff.gradient!(zeros(Float32, 2), tape, x)
+            @test all(isapprox.(grad, [inv(x[1]), -inv(x[2])]))
+        end
+        g = y -> sum(abs2, inverse(b)(y))
+        tape = ReverseDiff.compile(ReverseDiff.GradientTape(g, Float32[1]))
+        for y in (Float32[-90], Float32[0], Float32[90])
+            grad = ReverseDiff.gradient!(zeros(Float32, 1), tape, y)
+            @test all(isapprox.(grad, ForwardDiff.gradient(g, y)))
+        end
+    end
+
     @testset "Float32 simplex" begin
         d = Dirichlet(Float32[2, 3, 5])
         x = Float32[0.25, 0.25, 0.5]
