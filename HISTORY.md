@@ -1,3 +1,9 @@
+# 0.1.4
+
+Declare and document `ProductVecTransform` and `Elementwise` as public API for downstream product bijector implementations.
+
+Fix a bug with Enzyme on named product distribution bijectors.
+
 # 0.1.3
 
 Improve numerical stability of `Truncate` and `Untruncate`.

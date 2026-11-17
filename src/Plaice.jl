@@ -4,6 +4,23 @@ using VarNames: VarNames, @opticof
 import ChangesOfVariables: with_logabsdet_jacobian
 import InverseFunctions: inverse
 
+# On Julia 1.11+ mark the public API; on older versions this does nothing.
+macro public(ex)
+    # https://discourse.julialang.org/t/is-compat-jl-worth-it-for-the-public-keyword/119041/22
+    return if VERSION >= v"1.11.0-DEV.469"
+        args = if ex isa Symbol
+            (ex,)
+        elseif Base.isexpr(ex, :tuple)
+            ex.args
+        else
+            error("unexpected expression in @public")
+        end
+        esc(Expr(:public, args...))
+    else
+        nothing
+    end
+end
+
 include("common.jl")
 include("bijector_types.jl")
 include("interface.jl")
@@ -22,6 +39,7 @@ export is_monotonically_increasing
 export is_monotonically_decreasing
 export AbstractBijector
 export TypedIdentity, Log, Untruncate
+@public ProductVecTransform, Elementwise
 # re-exports
 export with_logabsdet_jacobian
 export logabsdet_jacobian

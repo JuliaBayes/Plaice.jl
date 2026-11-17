@@ -8,7 +8,7 @@
 using FillArrays: FillArrays
 
 """
-    Elementwise{T,S}
+    Elementwise(value, size::Dims)
 
 Similar in principle to a `FillArrays.Fill`: this represents an array of size `size` where
 all entries are `value`. However, this does not subtype AbstractArray.
