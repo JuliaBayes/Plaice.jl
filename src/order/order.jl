@@ -64,3 +64,94 @@ function with_logabsdet_jacobian(
     return x, logjac
 end
 inverse(m::InverseJointOrderWrap) = JointOrderWrap(inverse(m.bijector))
+
+struct JointIntervalOrderWrap{B<:Untruncate} <: AbstractBijector
+    bijector::B
+    use_support_gaps::Bool
+end
+
+struct InverseJointIntervalOrderWrap{B<:Untruncate} <: AbstractBijector
+    bijector::B
+    use_support_gaps::Bool
+end
+
+joint_order_wrap(b::ScalarToScalarBijector) = JointOrderWrap(b)
+function joint_order_wrap(b::Untruncate)
+    lower, upper = promote(b.lower, b.upper)
+    width = upper - lower
+    usable = lower < upper && isfinite(width) && width > zero(width)
+    return JointIntervalOrderWrap(b, usable)
+end
+
+inverse(m::JointIntervalOrderWrap) =
+    InverseJointIntervalOrderWrap(m.bijector, m.use_support_gaps)
+inverse(m::InverseJointIntervalOrderWrap) =
+    JointIntervalOrderWrap(m.bijector, m.use_support_gaps)
+
+# Keep both tails without subtracting either from one.
+function _ordered_stick(t)
+    positive = t >= zero(t)
+    e = exp(ifelse(positive, -t, t))
+    large = inv(one(e) + e)
+    small = e * large
+    logdenom = log1p(e)
+    p = ifelse(positive, large, small)
+    q = ifelse(positive, small, large)
+    logp = ifelse(positive, zero(t), t) - logdenom
+    logq = ifelse(positive, -t, zero(t)) - logdenom
+    return p, q, logp, logq
+end
+
+function with_logabsdet_jacobian(
+    m::InverseJointIntervalOrderWrap,
+    y::AbstractVector{T},
+) where {T<:Number}
+    if !m.use_support_gaps
+        return with_logabsdet_jacobian(InverseJointOrderWrap(inverse(m.bijector)), y)
+    end
+    R = promote_type(T, typeof(m.bijector.lower), typeof(m.bijector.upper))
+    x = similar(y, R)
+    previous = convert(R, m.bijector.lower)
+    upper = convert(R, m.bijector.upper)
+    remaining = upper - previous
+    logremaining = log(remaining)
+    lj = zero(R)
+    n = length(y)
+    for (k, i) in enumerate(eachindex(y))
+        t = convert(R, y[i]) - log(convert(R, n - k + 1))
+        p, q, logp, logq = _ordered_stick(t)
+        lj += logremaining + logp + logq
+        logremaining += logq
+        next_remaining = remaining * q
+        # Reconstruct from the nearer end of the remaining interval.
+        current = ifelse(p <= q, muladd(remaining, p, previous), upper - next_remaining)
+        x[i] = current
+        previous, remaining = current, next_remaining
+    end
+    return x, lj
+end
+
+function with_logabsdet_jacobian(
+    m::JointIntervalOrderWrap,
+    x::AbstractVector{T},
+) where {T<:Number}
+    if !m.use_support_gaps
+        return with_logabsdet_jacobian(JointOrderWrap(m.bijector), x)
+    end
+    R = promote_type(T, typeof(m.bijector.lower), typeof(m.bijector.upper))
+    y = similar(x, R)
+    previous = convert(R, m.bijector.lower)
+    upper = convert(R, m.bijector.upper)
+    lj = log(upper - previous)
+    logtail = zero(R)
+    n = length(x)
+    for (k, i) in enumerate(eachindex(x))
+        current = convert(R, x[i])
+        loggap = log(current - previous)
+        logtail = log(upper - current)
+        y[i] = loggap - logtail + log(convert(R, n - k + 1))
+        lj -= loggap
+        previous = current
+    end
+    return y, lj - logtail
+end

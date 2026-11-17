@@ -7,19 +7,22 @@ Plaice.from_unconstrained_vec(d::D.OrderStatistic) = Plaice.from_unconstrained_v
 # We don't need to implement the other methods as OrderStatistic is a subtype of
 # UnivariateDistribution, so we can just use the default methods.
 
-# Here, because `d.dist` isa UnivariateDistribution, we can get its scalar-to-scalar
-# bijector and then rewrap that inner bijector into a JointOrderWrap to get the desired
-# behavior.
+# Use the base scalar map to choose a chart for the ordered vector.
 Plaice.to_vec(::D.JointOrderStatistics) = Plaice.TypedIdentity()
 function Plaice.to_unconstrained_vec(d::D.JointOrderStatistics)
-    return Plaice.JointOrderWrap(Plaice.scalar_to_scalar_bijector(d.dist))
+    b = Plaice.scalar_to_scalar_bijector(d.dist)
+    # Distributions uses Float64 literals for Beta's fixed support.
+    if d.dist isa D.Beta &&
+       b isa Plaice.Untruncate{Float64,Float64} &&
+       b.lower == 0.0 &&
+       b.upper == 1.0
+        b = Plaice.Untruncate(0, 1)
+    end
+    return Plaice.joint_order_wrap(b)
 end
 Plaice.from_vec(::D.JointOrderStatistics) = Plaice.TypedIdentity()
-function Plaice.from_unconstrained_vec(d::D.JointOrderStatistics)
-    return Plaice.InverseJointOrderWrap(
-        Plaice.inverse(Plaice.scalar_to_scalar_bijector(d.dist)),
-    )
-end
+Plaice.from_unconstrained_vec(d::D.JointOrderStatistics) =
+    Plaice.inverse(Plaice.to_unconstrained_vec(d))
 # Since D.JointOrderStatistics is a subtype of MultivariateDistribution, we can use the
 # default definitions for vec_length and optic_vec.
 Plaice.unconstrained_vec_length(d::D.JointOrderStatistics) = Plaice.vec_length(d)
