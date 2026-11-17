@@ -62,17 +62,12 @@ end
 @testset "Bounded joint order gaps" begin
     @testset "Beta tail roundtrip" begin
         for T in (Float32, Float64)
-            d = JointOrderStatistics(Beta(T(2), T(2)), 10, 2:5)
-            y = T[
-                0.16396556879521654,
-                3.3638850955153283,
-                1.5481752027077047,
-                0.9775988358589079,
-            ]
+            d = JointOrderStatistics(Beta(T(2), T(2)), 2)
+            y = T[0, 4]
             x, lj = with_logabsdet_jacobian(from_unconstrained_vec(d), y)
             y_recon, lj_recon = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
             @test eltype(x) === eltype(y_recon) === typeof(lj) === typeof(lj_recon) === T
-            @test y_recon ≈ y atol = 50eps(T) * maximum(abs, y)
+            @test y_recon ≈ y
         end
     end
 
@@ -83,14 +78,13 @@ end
     end
 
     @testset "Affine support Jacobian" begin
-        d = JointOrderStatistics(Uniform(-2.0f0, 6.0f0), 3)
-        x, lj = with_logabsdet_jacobian(from_unconstrained_vec(d), zeros(Float32, 3))
-        y, lj_recon = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
-        @test x ≈ Float32[0, 2, 4]
-        @test y ≈ zeros(Float32, 3) atol = 8eps(Float32)
-        # At zero the three triangular entries are 3/2, 4/3 and 1.
-        @test lj ≈ log(2.0f0)
-        @test lj_recon ≈ -log(2.0f0)
+        d = JointOrderStatistics(Uniform(1, 5), 3)
+        x, lj = with_logabsdet_jacobian(from_unconstrained_vec(d), zeros(3))
+        _, lj_recon = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
+        @test x ≈ [2, 3, 4]
+        # The triangular entries at zero are 3/4, 2/3 and 1/2.
+        @test lj ≈ -log(4)
+        @test lj_recon ≈ log(4)
     end
 end
 

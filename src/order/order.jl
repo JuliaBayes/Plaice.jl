@@ -65,12 +65,7 @@ function with_logabsdet_jacobian(
 end
 inverse(m::InverseJointOrderWrap) = JointOrderWrap(inverse(m.bijector))
 
-struct JointIntervalOrderWrap{B<:Untruncate} <: AbstractBijector
-    bijector::B
-    use_support_gaps::Bool
-end
-
-struct InverseJointIntervalOrderWrap{B<:Untruncate} <: AbstractBijector
+struct JointIntervalOrderWrap{B<:Union{Truncate,Untruncate}} <: AbstractBijector
     bijector::B
     use_support_gaps::Bool
 end
@@ -84,9 +79,7 @@ function joint_order_wrap(b::Untruncate)
 end
 
 inverse(m::JointIntervalOrderWrap) =
-    InverseJointIntervalOrderWrap(m.bijector, m.use_support_gaps)
-inverse(m::InverseJointIntervalOrderWrap) =
-    JointIntervalOrderWrap(m.bijector, m.use_support_gaps)
+    JointIntervalOrderWrap(inverse(m.bijector), m.use_support_gaps)
 
 # Keep both tails without subtracting either from one.
 function _ordered_stick(t)
@@ -103,16 +96,16 @@ function _ordered_stick(t)
 end
 
 function with_logabsdet_jacobian(
-    m::InverseJointIntervalOrderWrap,
+    m::JointIntervalOrderWrap{<:Truncate},
     y::AbstractVector{T},
 ) where {T<:Number}
     if !m.use_support_gaps
-        return with_logabsdet_jacobian(InverseJointOrderWrap(inverse(m.bijector)), y)
+        return with_logabsdet_jacobian(InverseJointOrderWrap(m.bijector), y)
     end
-    R = promote_type(T, typeof(m.bijector.lower), typeof(m.bijector.upper))
+    lower, upper = m.bijector.lower, m.bijector.upper
+    R = promote_type(T, typeof(lower), typeof(upper))
     x = similar(y, R)
-    previous = convert(R, m.bijector.lower)
-    upper = convert(R, m.bijector.upper)
+    previous, upper = convert(R, lower), convert(R, upper)
     remaining = upper - previous
     logremaining = log(remaining)
     lj = zero(R)
@@ -132,16 +125,16 @@ function with_logabsdet_jacobian(
 end
 
 function with_logabsdet_jacobian(
-    m::JointIntervalOrderWrap,
+    m::JointIntervalOrderWrap{<:Untruncate},
     x::AbstractVector{T},
 ) where {T<:Number}
     if !m.use_support_gaps
         return with_logabsdet_jacobian(JointOrderWrap(m.bijector), x)
     end
-    R = promote_type(T, typeof(m.bijector.lower), typeof(m.bijector.upper))
+    lower, upper = m.bijector.lower, m.bijector.upper
+    R = promote_type(T, typeof(lower), typeof(upper))
     y = similar(x, R)
-    previous = convert(R, m.bijector.lower)
-    upper = convert(R, m.bijector.upper)
+    previous, upper = convert(R, lower), convert(R, upper)
     lj = log(upper - previous)
     logtail = zero(R)
     n = length(x)
