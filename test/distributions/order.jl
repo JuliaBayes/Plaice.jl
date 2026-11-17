@@ -59,4 +59,33 @@ joint_test_adtypes = [
     end
 end
 
+@testset "Bounded joint order gaps" begin
+    @testset "Beta tail roundtrip" begin
+        for T in (Float32, Float64)
+            d = JointOrderStatistics(Beta(T(2), T(2)), 2)
+            y = T[0, 4]
+            x, lj = with_logabsdet_jacobian(from_unconstrained_vec(d), y)
+            y_recon, lj_recon = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
+            @test eltype(x) === eltype(y_recon) === typeof(lj) === typeof(lj_recon) === T
+            @test y_recon ≈ y
+        end
+    end
+
+    @testset "Long interior initialization" begin
+        d = JointOrderStatistics(Beta(2, 2), 64)
+        x = from_unconstrained_vec(d)(zeros(64))
+        @test all(diff([0; x; 1]) .> 0)
+    end
+
+    @testset "Affine support Jacobian" begin
+        d = JointOrderStatistics(Uniform(1, 5), 3)
+        x, lj = with_logabsdet_jacobian(from_unconstrained_vec(d), zeros(3))
+        _, lj_recon = with_logabsdet_jacobian(to_unconstrained_vec(d), x)
+        @test x ≈ [2, 3, 4]
+        # The triangular entries at zero are 3/4, 2/3 and 1/2.
+        @test lj ≈ -log(4)
+        @test lj_recon ≈ log(4)
+    end
+end
+
 end # module PlaiceOrderTests
