@@ -9,6 +9,9 @@ module PlaiceReactantTests
 # This module tests that the bijectors can be compiled when their parameters are traced
 # numbers.
 
+using Pkg
+Pkg.add("Reactant")
+
 using Plaice
 using Plaice: Truncate, Untruncate, Exp, Log
 using Reactant: Reactant, @jit
