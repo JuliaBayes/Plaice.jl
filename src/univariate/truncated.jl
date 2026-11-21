@@ -5,13 +5,6 @@
 # runtime). So there is some element of code repetition here: the case where both bounds are
 # infinite is the same as `TypedIdentity`, and the case where only the upper bound is
 # infinite is the same as `Exp` and `Log`.
-#
-# The bounds may also be traced numbers when compiling with Reactant (e.g. if they depend on
-# another parameter, as in `Uniform(0, 1 - alpha)`). Then `isfinite` returns a traced
-# boolean, which can't be used in a normal `if`. `@trace res = if ... end` compiles to a
-# conditional in that case, and is a normal `if` otherwise. (Note that `res = @trace if ...
-# end` does not work: the compiled version returns `nothing`.) For the same reason,
-# conditions use `&` rather than `&&`.
 
 using LogExpFunctions: logistic, log1pexp
 
