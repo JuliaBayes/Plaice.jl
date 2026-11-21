@@ -3,6 +3,7 @@ module Plaice
 using VarNames: VarNames, @opticof
 import ChangesOfVariables: with_logabsdet_jacobian
 import InverseFunctions: inverse
+using ReactantCore: @trace
 
 # On Julia 1.11+ mark the public API; on older versions this does nothing.
 macro public(ex)

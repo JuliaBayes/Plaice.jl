@@ -5,6 +5,12 @@
 # runtime). So there is some element of code repetition here: the case where both bounds are
 # infinite is the same as `TypedIdentity`, and the case where only the upper bound is
 # infinite is the same as `Exp` and `Log`.
+#
+# The bounds may also be traced numbers when compiling with Reactant (e.g. if they depend on
+# another parameter, as in `Uniform(0, 1 - alpha)`). Then `isfinite` returns a traced
+# boolean, which can't be used in a normal `if`. `@trace if` compiles to a conditional in
+# that case, and is a normal `if` otherwise. For the same reason, conditions use `&` rather
+# than `&&`.
 
 using LogExpFunctions: logistic, log1pexp
 
@@ -22,19 +28,20 @@ is_monotonically_increasing(t::Truncate) = !is_monotonically_decreasing(t)
 is_monotonically_decreasing(t::Truncate) = !isfinite(t.lower) && isfinite(t.upper)
 function (t::Truncate)(y::Number)
     lbounded, ubounded = isfinite(t.lower), isfinite(t.upper)
-    return if lbounded && ubounded
-        ((t.upper - t.lower) * logistic(y)) + t.lower
+    @trace if lbounded & ubounded
+        res = ((t.upper - t.lower) * logistic(y)) + t.lower
     elseif lbounded
-        exp(y) + t.lower
+        res = exp(y) + t.lower
     elseif ubounded
-        t.upper - exp(y)
+        res = t.upper - exp(y)
     else
-        y
+        res = y
     end
+    return res
 end
 function with_logabsdet_jacobian(t::Truncate, y::Number)
     lbounded, ubounded = isfinite(t.lower), isfinite(t.upper)
-    return if lbounded && ubounded
+    @trace if lbounded & ubounded
         bma = t.upper - t.lower
         res = (bma * logistic(y)) + t.lower
         # This is the same as `log(bma) + y - (2 * log1pexp(y))`, but that form gives
@@ -42,14 +49,17 @@ function with_logabsdet_jacobian(t::Truncate, y::Number)
         # also slightly more accurate for large positive `y`.
         absy = abs(y)
         logjac = log(bma) - absy - (2 * log1pexp(-absy))
-        res, logjac
     elseif lbounded
-        exp(y) + t.lower, y
+        res = exp(y) + t.lower
+        logjac = y
     elseif ubounded
-        t.upper - exp(y), y
+        res = t.upper - exp(y)
+        logjac = y
     else
-        y, zero(y)
+        res = y
+        logjac = zero(y)
     end
+    return res, logjac
 end
 inverse(t::Truncate) = Untruncate(t.lower, t.upper)
 
@@ -73,15 +83,16 @@ is_monotonically_increasing(t::Untruncate) = !is_monotonically_decreasing(t)
 is_monotonically_decreasing(t::Untruncate) = !isfinite(t.lower) && isfinite(t.upper)
 function (u::Untruncate)(x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
-    return if lbounded && ubounded
-        log(x - u.lower) - log(u.upper - x)
+    @trace if lbounded & ubounded
+        res = log(x - u.lower) - log(u.upper - x)
     elseif lbounded
-        log(x - u.lower)
+        res = log(x - u.lower)
     elseif ubounded
-        log(u.upper - x)
+        res = log(u.upper - x)
     else
-        x
+        res = x
     end
+    return res
 end
 function with_logabsdet_jacobian(u::Untruncate, x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
@@ -91,22 +102,27 @@ function with_logabsdet_jacobian(u::Untruncate, x::Number)
     #
     # That's a failure with Enzyme.jacobian rather than Enzyme.gradient, so it's unlikely
     # that it will really be hit in practice. But it's still worth being careful here
-    return if lbounded
+    @trace if lbounded
         log_xma = log(x - u.lower)
-        if ubounded
+        @trace if ubounded
             # We could compute `logit((x - a) / (b - a))`, but when `x` is close to `b`,
             # the rounding error in `(x - a) / (b - a)` gets magnified when `logit`
             # computes `1 - (x - a) / (b - a)`. Calculating `b - x` directly avoids this.
             log_bmx = log(u.upper - x)
-            log_xma - log_bmx, log(u.upper - u.lower) - log_xma - log_bmx
+            res = log_xma - log_bmx
+            logjac = log(u.upper - u.lower) - log_xma - log_bmx
         else
-            log_xma, -log_xma
+            res = log_xma
+            logjac = -log_xma
         end
     elseif ubounded
         log_bmx = log(u.upper - x)
-        log_bmx, -log_bmx
+        res = log_bmx
+        logjac = -log_bmx
     else
-        x, zero(x)
+        res = x
+        logjac = zero(x)
     end
+    return res, logjac
 end
 inverse(u::Untruncate) = Truncate(u.lower, u.upper)
