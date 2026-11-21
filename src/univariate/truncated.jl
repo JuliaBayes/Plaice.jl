@@ -88,23 +88,16 @@ function (u::Untruncate)(x::Number)
 end
 function with_logabsdet_jacobian(u::Untruncate, x::Number)
     lbounded, ubounded = isfinite(u.lower), isfinite(u.upper)
-    # This conditional needs some care: if we change the structure to `if lbounded &&
-    # ubounded ...` then it runs into https://github.com/EnzymeAD/Enzyme.jl/issues/3679
-    # on 1.10.
-    #
-    # That's a failure with Enzyme.jacobian rather than Enzyme.gradient, so it's unlikely
-    # that it will really be hit in practice. But it's still worth being careful here
-    @trace res = if lbounded
+    @trace res = if lbounded & ubounded
+        # We could compute `logit((x - a) / (b - a))`, but when `x` is close to `b`, the
+        # rounding error in `(x - a) / (b - a)` gets magnified when `logit` computes
+        # `1 - (x - a) / (b - a)`. Calculating `b - x` directly avoids this.
         log_xma = log(x - u.lower)
-        if ubounded
-            # We could compute `logit((x - a) / (b - a))`, but when `x` is close to `b`,
-            # the rounding error in `(x - a) / (b - a)` gets magnified when `logit`
-            # computes `1 - (x - a) / (b - a)`. Calculating `b - x` directly avoids this.
-            log_bmx = log(u.upper - x)
-            log_xma - log_bmx, log(u.upper - u.lower) - log_xma - log_bmx
-        else
-            log_xma, -log_xma
-        end
+        log_bmx = log(u.upper - x)
+        log_xma - log_bmx, log(u.upper - u.lower) - log_xma - log_bmx
+    elseif lbounded
+        log_xma = log(x - u.lower)
+        log_xma, -log_xma
     elseif ubounded
         log_bmx = log(u.upper - x)
         log_bmx, -log_bmx
