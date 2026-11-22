@@ -1,3 +1,7 @@
+# 0.1.5
+
+The `Truncate` and `Untruncate` bijectors now work even if their parameters are traced Reactant numbers.
+
 # 0.1.4
 
 Declare and document `ProductVecTransform` and `Elementwise` as public API for downstream product bijector implementations.
